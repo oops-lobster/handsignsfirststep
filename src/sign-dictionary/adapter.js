@@ -1,3 +1,5 @@
+import { request as httpsRequest } from "node:https";
+
 const defaultSources = [
   {
     id: "life",
@@ -35,6 +37,8 @@ const sourcePriority = {
   specialized: 2,
   culture: 3
 };
+
+const apiHostFallbackIp = "175.125.91.8";
 
 function getFirstValue(object, keys) {
   for (const key of keys) {
@@ -221,6 +225,62 @@ function filterFingerspellingEntries(entries, query) {
   });
 }
 
+function shouldUseDnsFallback(error, url) {
+  return url.hostname === "api.kcisa.kr" && String(error?.cause?.code || error?.code || "").includes("ENOTFOUND");
+}
+
+async function fetchWithDnsFallback(fetchImpl, url, options, timeoutMs) {
+  try {
+    return await fetchImpl(url, options);
+  } catch (error) {
+    if (!shouldUseDnsFallback(error, url)) throw error;
+    return requestWithHostIp(url, options, timeoutMs);
+  }
+}
+
+function requestWithHostIp(url, options, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const request = httpsRequest({
+      protocol: url.protocol,
+      hostname: url.hostname,
+      path: `${url.pathname}${url.search}`,
+      method: "GET",
+      headers: options.headers,
+      timeout: timeoutMs,
+      lookup(hostname, requestOptions, callback) {
+        if (hostname === "api.kcisa.kr") {
+          callback(null, apiHostFallbackIp, 4);
+          return;
+        }
+        callback(new Error(`No DNS fallback configured for ${hostname}`));
+      }
+    }, response => {
+      let body = "";
+      response.setEncoding("utf8");
+      response.on("data", chunk => {
+        body += chunk;
+      });
+      response.on("end", () => {
+        resolve({
+          ok: response.statusCode >= 200 && response.statusCode < 300,
+          status: response.statusCode,
+          headers: response.headers,
+          text: async () => body
+        });
+      });
+    });
+
+    request.on("timeout", () => {
+      request.destroy(new Error("Culture API DNS fallback request timed out"));
+    });
+    request.on("error", reject);
+    options.signal?.addEventListener("abort", () => {
+      request.destroy(new Error("Culture API request aborted"));
+    }, { once: true });
+    request.end();
+  });
+}
+
 export class SignDictionaryAdapter {
   constructor({ env = process.env, fetchImpl = fetch } = {}) {
     this.env = env;
@@ -244,14 +304,29 @@ export class SignDictionaryAdapter {
         if (source.id === "integrated" && !url.searchParams.has("collectionDb")) url.searchParams.set("collectionDb", "");
         if (this.env.CULTURE_API_FORMAT) url.searchParams.set(this.env.CULTURE_API_FORMAT_PARAM || "format", this.env.CULTURE_API_FORMAT);
 
-        const response = await this.fetchImpl(url, {
+        const requestOptions = {
           signal: AbortSignal.timeout(this.timeoutMs),
           headers: { accept: "application/json, text/xml;q=0.9, */*;q=0.8" }
-        });
+        };
+        const response = await fetchWithDnsFallback(this.fetchImpl, url, requestOptions, this.timeoutMs);
         const text = await response.text();
-        if (!response.ok) throw new Error(`${source.name} returned ${response.status}`);
+        if (!response.ok) {
+          const error = new Error(`${source.name} returned ${response.status}`);
+          error.status = response.status;
+          error.body = text.slice(0, 240);
+          throw error;
+        }
         entries.push(...parseApiPayload(text).map(entry => normalizeEntry(entry, query, source)));
       } catch (error) {
+        if (this.env.DEBUG_CULTURE_API === "true") {
+          console.warn("Culture API search failed", {
+            source: source.id,
+            status: error.status || null,
+            message: error.message,
+            cause: error.cause?.code || "",
+            body: error.body || ""
+          });
+        }
         warnings.push(`${source.name} search is temporarily unavailable.`);
       }
     }
