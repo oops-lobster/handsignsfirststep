@@ -178,11 +178,30 @@ export async function renderPractice(app, id, repo) {
   let stableFeedback = [];
   let stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0, referenceMode: hasDictionaryReference ? "dictionary-video-reference" : "general-camera-check" };
   let practiceUnlocked = false;
+  let passHoldStartedAt = 0;
+  let successOverlayTimer = 0;
+  const passHoldMs = 3000;
   const history = [];
+
+  function clearHoldTimer() {
+    passHoldStartedAt = 0;
+    window.clearTimeout(successOverlayTimer);
+    countdownOverlay.hidden = true;
+  }
+
+  function showSuccessOverlay() {
+    window.clearTimeout(successOverlayTimer);
+    countdownOverlay.hidden = false;
+    countdownOverlay.textContent = "훌륭해요!";
+    successOverlayTimer = window.setTimeout(() => {
+      countdownOverlay.hidden = true;
+    }, 1000);
+  }
 
   function unlockPractice() {
     if (practiceUnlocked) return;
     practiceUnlocked = true;
+    passHoldStartedAt = 0;
     repo.markDictionaryPracticePassed(lesson.id);
     quizLinks.forEach(link => {
       link.removeAttribute("aria-disabled");
@@ -192,6 +211,32 @@ export async function renderPractice(app, id, repo) {
     completeButton.disabled = false;
     completeButton.textContent = "연습 완료 저장";
     status.textContent = "훌륭해요! 사전 설명과 맞아서 확인하기로 넘어갈 수 있어요.";
+    showSuccessOverlay();
+  }
+
+  function updatePracticeGate(meta) {
+    if (practiceUnlocked) return false;
+    if (!meta.practicePassed) {
+      clearHoldTimer();
+      return false;
+    }
+
+    const now = performance.now();
+    if (!passHoldStartedAt) passHoldStartedAt = now;
+
+    const elapsed = now - passHoldStartedAt;
+    const remainingMs = Math.max(0, passHoldMs - elapsed);
+    const remainingSeconds = Math.ceil(remainingMs / 1000);
+    countdownOverlay.hidden = false;
+    countdownOverlay.textContent = remainingMs > 0 ? `${remainingSeconds}초` : "훌륭해요!";
+
+    if (elapsed >= passHoldMs) {
+      unlockPractice();
+    } else {
+      status.textContent = `좋아요. 지금 손모양을 ${remainingSeconds}초만 유지해 주세요.`;
+    }
+
+    return true;
   }
 
   function resizeCanvas() {
@@ -235,10 +280,10 @@ export async function renderPractice(app, id, repo) {
           pendingFeedbackKey = feedbackKey;
           pendingFeedbackCount = 1;
         }
-        if (stableMeta.practicePassed) unlockPractice();
+        const gateMessageActive = updatePracticeGate(stableMeta);
         feedbackList.innerHTML = stableFeedback.map(item => `<div class="feedbackItem ${item.state === "success" ? "success" : ""}">${html(item.text)}</div>`).join("");
         evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
-        if (!practiceUnlocked) status.textContent = hands.length ? `${hands.length}개 손이 감지되고 있어요.` : "손이 아직 보이지 않아요.";
+        if (!practiceUnlocked && !gateMessageActive) status.textContent = hands.length ? `${hands.length}개 손이 감지되고 있어요.` : "손이 아직 보이지 않아요.";
       } finally {
         inferenceRunning = false;
       }
@@ -323,6 +368,7 @@ export async function renderPractice(app, id, repo) {
     pendingFeedbackCount = 0;
     stableFeedback = [];
     stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0, referenceMode: hasDictionaryReference ? "dictionary-video-reference" : "general-camera-check" };
+    clearHoldTimer();
     feedbackList.innerHTML = "";
     evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
     status.textContent = running ? "다시 천천히 손을 보여주세요." : "카메라를 시작하기 전입니다.";
