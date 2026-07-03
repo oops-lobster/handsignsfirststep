@@ -222,13 +222,17 @@ async function home() {
 async function listLessons() {
   const { lessons } = await api("/api/lessons");
   const { progress, completed, total, percent } = progressSummary(lessons);
+  const starterLessons = lessons.filter(lesson => lesson.curriculumGroup === "starter");
+  const remainingLessons = lessons.filter(lesson => lesson.curriculumGroup !== "starter");
   app.innerHTML = `
-    <section class="hero compactHero">
-      ${rumiMascot("happy", "md", true)}
-      <div class="speechBubble heroBubble">
+    <section class="listIntro">
+      <div class="listIntroMascot">
+        ${rumiMascot("happy", "md", true)}
+      </div>
+      <div class="speechBubble listIntroBubble">
         <p class="eyebrow">지문자 배우기</p>
-        <h1>손바닥을 눌러 오늘의 손말을 골라요</h1>
-        <p class="lead">자음과 모음을 나누어 보고, 연결 가능한 국립수어사전 영상을 확인합니다.</p>
+        <h1>오늘 배울 손말 하나를 골라요</h1>
+        <p class="lead">이 화면의 기능은 하나입니다. 손바닥 버튼을 눌러 한 글자의 보기, 따라 하기, 확인하기로 이동합니다.</p>
         <div class="progressPebble" aria-label="전체 진행률 ${percent}%">
           <span>모은 빛</span>
           <strong>${completed} / ${total}</strong>
@@ -236,18 +240,20 @@ async function listLessons() {
         </div>
       </div>
     </section>
-    <section class="sectionTitle">
+    <section class="sectionTitle contentRail">
       <span>Starter</span>
       <h2>입문 손바닥 길</h2>
       <p class="lead">처음 5개는 루미가 먼저 안내하는 시범 과정입니다.</p>
     </section>
-    ${handLetterPad(lessons.filter(lesson => lesson.curriculumGroup === "starter"), progress.completedLessonIds)}
-    <section class="sectionTitle">
+    <div class="contentRail">
+      ${handLetterPad(starterLessons, progress.completedLessonIds)}
+    </div>
+    <section class="sectionTitle contentRail">
       <span>All Letters</span>
-      <h2>전체 지문자 말풍선</h2>
-      <p class="lead">궁금한 글자를 바로 눌러서 기준 영상을 볼 수 있어요.</p>
+      <h2>다음 글자들</h2>
+      <p class="lead">입문 과정을 마친 뒤 하나씩 열어볼 수 있는 지문자입니다.</p>
     </section>
-    <section class="bubbleList">${lessons.map(lesson => lessonCard(lesson, progress.completedLessonIds)).join("")}</section>
+    <section class="bubbleList contentRail">${remainingLessons.map(lesson => lessonCard(lesson, progress.completedLessonIds)).join("")}</section>
   `;
 }
 
@@ -434,15 +440,15 @@ async function progressPage() {
 
 function aboutPage() {
   app.innerHTML = `
-    <section class="hero compactHero">
-      ${rumiMascot("thinking", "md", true)}
-      <div class="speechBubble heroBubble">
+    <section class="infoScreen">
+      <div class="infoMascot">${rumiMascot("thinking", "md", true)}</div>
+      <div class="speechBubble infoBubble">
       <p class="eyebrow">About</p>
       <h1>손말 첫걸음은 공식 평가 도구가 아닙니다.</h1>
       <p class="lead">이 앱은 한국수어 지문자를 처음 접하는 사용자가 사전 영상을 보고 반복 연습하도록 돕는 학습 MVP입니다. 통역 서비스가 아니며, 모든 손 모양을 정확하게 판정하지 않습니다.</p>
       </div>
     </section>
-    <section class="bubbleList">
+    <section class="infoList contentRail">
       <article class="speechBubble miniBubble"><strong>카메라 개인정보</strong><p>카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p></article>
       <article class="speechBubble miniBubble"><strong>출처</strong><p>수어 영상은 국립국어원 한국수어사전 자료를 API로 연결해 표시합니다.</p></article>
       <article class="speechBubble miniBubble"><strong>검수 필요</strong><p>세부 손 모양 설명과 기준 손 위치 데이터는 농인 당사자 및 한국수어 전문가 검수가 필요합니다.</p></article>
