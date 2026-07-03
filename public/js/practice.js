@@ -81,6 +81,10 @@ function renderEvaluationMeta(meta) {
   `;
 }
 
+function lockedQuizLink(lessonId, label = "확인하기 잠김") {
+  return `<a class="button quizLockedLink" href="/learn/fingerspelling/${html(lessonId)}#quiz" aria-disabled="true" tabindex="-1">${html(label)}</a>`;
+}
+
 export async function renderPractice(app, id, repo) {
   const [{ lesson }, dictionary] = await Promise.all([
     api(`/api/lessons/${encodeURIComponent(id)}`),
@@ -101,7 +105,7 @@ export async function renderPractice(app, id, repo) {
       <a href="/learn/fingerspelling/${html(lesson.id)}#watch">보기</a>
       <a href="/learn/fingerspelling/${html(lesson.id)}#understand">손모양 익히기</a>
       <span data-active="true" aria-current="step">따라 하기</span>
-      <a href="/learn/fingerspelling/${html(lesson.id)}#quiz">확인하기</a>
+      <span aria-disabled="true">확인하기</span>
       <a href="/learn/fingerspelling/${html(lesson.id)}#complete">완료</a>
     </nav>
     <section class="cameraGrid">
@@ -149,7 +153,7 @@ export async function renderPractice(app, id, repo) {
       </div>
       <div class="actions">
         <a class="button secondary" href="/learn/fingerspelling/${html(lesson.id)}">학습 화면으로 돌아가기</a>
-        <a id="quizLink" class="button" href="/learn/fingerspelling/${html(lesson.id)}#quiz" aria-disabled="true" tabindex="-1">확인하기 잠김</a>
+        ${lockedQuizLink(lesson.id)}
       </div>
     </section>
   `;
@@ -161,7 +165,7 @@ export async function renderPractice(app, id, repo) {
   const feedbackList = document.querySelector("#feedbackList");
   const evaluationMeta = document.querySelector("#evaluationMeta");
   const completeButton = document.querySelector("#completePractice");
-  const quizLink = document.querySelector("#quizLink");
+  const quizLinks = [...document.querySelectorAll(".quizLockedLink")];
   let landmarker = null;
   let stream = null;
   let running = false;
@@ -178,9 +182,12 @@ export async function renderPractice(app, id, repo) {
   function unlockPractice() {
     if (practiceUnlocked) return;
     practiceUnlocked = true;
-    quizLink.removeAttribute("aria-disabled");
-    quizLink.removeAttribute("tabindex");
-    quizLink.textContent = "확인하기로 이동";
+    repo.markPracticePassed(lesson.id);
+    quizLinks.forEach(link => {
+      link.removeAttribute("aria-disabled");
+      link.removeAttribute("tabindex");
+      link.textContent = "확인하기로 이동";
+    });
     completeButton.disabled = false;
     completeButton.textContent = "연습 완료 저장";
     status.textContent = "훌륭해요! 사전 설명과 맞아서 확인하기로 넘어갈 수 있어요.";
@@ -316,9 +323,11 @@ export async function renderPractice(app, id, repo) {
     evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
     status.textContent = running ? "다시 천천히 손을 보여주세요." : "카메라를 시작하기 전입니다.";
     practiceUnlocked = false;
-    quizLink.setAttribute("aria-disabled", "true");
-    quizLink.setAttribute("tabindex", "-1");
-    quizLink.textContent = "확인하기 잠김";
+    quizLinks.forEach(link => {
+      link.setAttribute("aria-disabled", "true");
+      link.setAttribute("tabindex", "-1");
+      link.textContent = "확인하기 잠김";
+    });
     completeButton.disabled = true;
     completeButton.textContent = "채점 후 저장";
   });
@@ -331,12 +340,13 @@ export async function renderPractice(app, id, repo) {
     completeButton.textContent = "저장 완료";
   });
 
-  quizLink.addEventListener("click", event => {
-    if (quizLink.getAttribute("aria-disabled") === "true") {
+  quizLinks.forEach(link => link.addEventListener("click", event => {
+    if (link.getAttribute("aria-disabled") === "true") {
       event.preventDefault();
-      status.textContent = "사전 설명과 손모양이 맞으면 확인하기가 열려요.";
+      status.textContent = "아직! 학습이 덜되었어요! 사전 설명과 손모양이 맞으면 확인하기가 열려요.";
+      feedbackList.innerHTML = `<div class="feedbackItem">아직! 학습이 덜되었어요! 기준 영상과 사전 설명을 보고 다시 맞춰볼까요?</div>`;
     }
-  });
+  }));
 
   window.addEventListener("pagehide", () => {
     running = false;

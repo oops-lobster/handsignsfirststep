@@ -2,6 +2,7 @@ export const defaultProgress = {
   schemaVersion: 1,
   completedLessonIds: [],
   quizCompletedLessonIds: [],
+  practicePassedLessonIds: [],
   lastLessonId: "",
   reviewLessonIds: [],
   recentLessonIds: [],
@@ -46,6 +47,13 @@ export class LearningProgressRepository {
   completeQuiz(lessonId) {
     const progress = this.getProgress();
     if (!progress.quizCompletedLessonIds.includes(lessonId)) progress.quizCompletedLessonIds.push(lessonId);
+    this.saveLastLesson(lessonId, progress);
+    return this.save(progress);
+  }
+
+  markPracticePassed(lessonId) {
+    const progress = this.getProgress();
+    if (!progress.practicePassedLessonIds.includes(lessonId)) progress.practicePassedLessonIds.push(lessonId);
     this.saveLastLesson(lessonId, progress);
     return this.save(progress);
   }

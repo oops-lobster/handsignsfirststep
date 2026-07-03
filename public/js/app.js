@@ -58,18 +58,20 @@ function renderQuizCard(item, index) {
   `;
 }
 
-function renderLessonStepper(lessonId, currentStep) {
+function renderLessonStepper(lessonId, currentStep, { practicePassed = true } = {}) {
   const steps = [
     ["보기", `/learn/fingerspelling/${lessonId}#watch`],
     ["손모양 익히기", `/learn/fingerspelling/${lessonId}#understand`],
     ["따라 하기", `/practice/fingerspelling/${lessonId}`],
-    ["확인하기", `/learn/fingerspelling/${lessonId}#quiz`],
+    ["확인하기", practicePassed ? `/learn/fingerspelling/${lessonId}#quiz` : ""],
     ["완료", `/learn/fingerspelling/${lessonId}#complete`]
   ];
   return `
     <nav class="stepper" aria-label="학습 단계">
       ${steps.map(([step, href]) => step === currentStep
         ? `<span data-active="true" aria-current="step">${step}</span>`
+        : !href
+          ? `<span aria-disabled="true">${step}</span>`
         : `<a href="${html(href)}">${step}</a>`).join("")}
     </nav>
   `;
@@ -163,6 +165,7 @@ async function lessonPage(id) {
   const stage = lessonStageFromHash();
   const progress = repo.getProgress();
   const isCompleted = progress.completedLessonIds.includes(lesson.id);
+  const practicePassed = progress.practicePassedLessonIds.includes(lesson.id);
   let stageMarkup = "";
 
   if (stage === "watch") {
@@ -196,19 +199,31 @@ async function lessonPage(id) {
   }
 
   if (stage === "quiz") {
-    stageMarkup = `
-      <section id="quiz" class="panel learningStage singleStage">
-        <p class="eyebrow">확인하기</p>
-        <h2>오늘 배운 지문자를 골라보세요.</h2>
-        <div class="quizStack">
-          ${quiz.map(renderQuizCard).join("")}
-        </div>
-        <div class="stageNav">
-          <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">이전: 따라 하기</a>
-          <button id="completeLesson">완료 저장</button>
-        </div>
-      </section>
-    `;
+    stageMarkup = practicePassed
+      ? `
+        <section id="quiz" class="panel learningStage singleStage">
+          <p class="eyebrow">확인하기</p>
+          <h2>오늘 배운 지문자를 골라보세요.</h2>
+          <div class="quizStack">
+            ${quiz.map(renderQuizCard).join("")}
+          </div>
+          <div class="stageNav">
+            <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">이전: 따라 하기</a>
+            <button id="completeLesson">완료 저장</button>
+          </div>
+        </section>
+      `
+      : `
+        <section id="quiz" class="panel learningStage singleStage">
+          <p class="eyebrow">확인하기 잠김</p>
+          <h2>아직! 학습이 덜 되었어요.</h2>
+          <p class="lead">사전 설명의 손가락 조건과 맞으면 확인하기가 열립니다. 먼저 따라 하기에서 손모양을 맞춰보세요.</p>
+          <div class="actions">
+            <a class="button" href="/practice/fingerspelling/${lesson.id}">따라 하기에서 다시 해보기</a>
+            <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#understand">손모양 다시 보기</a>
+          </div>
+        </section>
+      `;
   }
 
   if (stage === "complete") {
@@ -242,7 +257,7 @@ async function lessonPage(id) {
       <h1><span class="symbol">${html(lesson.symbol)}</span> 지문자 배우기</h1>
       <p class="lead">보기, 손모양 익히기, 따라 하기, 확인하기, 완료 순서로 천천히 연습합니다.</p>
     </section>
-    ${renderLessonStepper(lesson.id, lessonStageLabel(stage))}
+    ${renderLessonStepper(lesson.id, lessonStageLabel(stage), { practicePassed })}
     ${stageMarkup}
   `;
   document.querySelector("#completeLesson")?.addEventListener("click", () => {
