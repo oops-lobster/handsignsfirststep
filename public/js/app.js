@@ -192,62 +192,30 @@ function lessonCard(lesson, completedIds = []) {
 }
 
 async function home() {
-  const { lessons } = await api("/api/lessons");
-  const { progress, completed, total, percent } = progressSummary(lessons);
-  const next = lessons.find(lesson => !progress.completedLessonIds.includes(lesson.id)) || lessons[0];
-  const starter = lessons.filter(lesson => lesson.curriculumGroup === "starter");
-  const mapSteps = [
-    ["오늘의 지문자", next ? `${next.symbol} 손말 보기` : "첫 지문자 열기", next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling", "current", "현재", "손"],
-    ["손모양 따라하기", "카메라로 손 확인", next ? `/practice/fingerspelling/${next.id}` : "/learn/fingerspelling", "locked", "연습", "빛"],
-    ["확인하기", "사진을 보고 골라보기", next ? `/learn/fingerspelling/${next.id}#quiz` : "/learn/fingerspelling", "locked", "잠김", "?"],
-    ["루미의 칭찬", "오늘의 빛 받기", "/progress", completed ? "reward" : "locked", completed ? "보상" : "잠김", "★"]
-  ].map(([title, description, href, status, statusLabel, icon]) => ({ title, description, href, status, statusLabel, icon }));
   app.innerHTML = `
-    <section class="hero rumiHero">
-      <div class="heroMascot">
-        ${rumiMascot("happy", "lg", true)}
+    <section class="introScreen" aria-labelledby="introTitle">
+      <div class="introLogo">
+        <img src="/assets/rumi/logo/rumi_app_logo.png" alt="손말 첫걸음 루미 로고">
+        <span>손말 첫걸음</span>
       </div>
-      <div class="speechBubble heroBubble">
-        <p class="eyebrow">루미와 함께</p>
-        <h1>루미와 함께 손말 첫걸음을 시작해요</h1>
-        <p class="lead">오늘은 어떤 손말을 배워볼까요? 국립수어사전 영상을 보고, 내 손을 카메라로 확인하며 천천히 연습해요.</p>
-        <p class="rumiNameNote"><strong>루미</strong>는 손말을 배울 때 길을 밝혀주는 작은 빛이에요. 수어를 처음 만나는 순간이 조금 더 따뜻해지도록 옆에서 같이 걸어갑니다.</p>
-        <div class="actions">
-          <a class="palmButton" href="${next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling"}">오늘의 첫걸음 시작</a>
-          <a class="palmButton palmButton--soft" href="/learn/fingerspelling">지문자 연습하기</a>
-        </div>
-        <div class="progressPebble" aria-label="전체 진행률 ${percent}%">
-          <span>오늘의 빛</span>
-          <strong>${completed} / ${total}</strong>
-          <div class="progressBar"><span style="width:${percent}%"></span></div>
+
+      <div class="introStage" aria-hidden="true">
+        <img class="introRumi introRumi--one" src="${html(rumiImages.happy)}" alt="">
+        <img class="introRumi introRumi--two" src="${html(rumiImages.cheer)}" alt="">
+        <img class="introRumi introRumi--three" src="${html(rumiImages.encourage)}" alt="">
+        <img class="introRumi introRumi--four" src="${html(rumiImages.idle)}" alt="">
+      </div>
+
+      <div class="introCopy">
+        <p class="eyebrow">Rumi Intro</p>
+        <h1 id="introTitle">수어는 자막입니다.</h1>
+        <p class="lead">루미는 손말을 배울 때 길을 밝혀주는 작은 빛이에요. 오늘은 한 글자만 천천히 보고, 따라 하고, 확인해요.</p>
+        <div class="introActions">
+          <a class="palmButton" href="/learn/fingerspelling">학습 시작</a>
+          <a class="palmButton palmButton--soft" href="/progress">내 빛 보기</a>
         </div>
       </div>
     </section>
-    ${rumiSpeechBubble({
-      emotion: completed ? "cheer" : "happy",
-      eyebrow: "오늘의 루미 피드백",
-      message: completed ? "와! 오늘도 손말 빛을 모았어요. 다음 지문자도 같이 가볼까요?" : "오늘도 한 걸음 같이 가볼까요? 먼저 영상을 보고 손모양을 천천히 따라 해요.",
-      actionLabel: "이어서 가기",
-      href: next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling"
-    })}
-    <section class="sectionTitle mapTitle">
-      <span>Adventure Map</span>
-      <h2>말풍선 학습 지도</h2>
-      <p class="lead">카드를 고르는 화면이 아니라, 루미와 함께 말풍선 길을 따라 이동하는 학습 흐름입니다.</p>
-    </section>
-    ${bubbleLearningMap(mapSteps)}
-    <section class="sectionTitle">
-      <span>Starter</span>
-      <h2>첫 5개 손바닥 타일</h2>
-      <p class="lead">입문 과정은 전문가 검수 전 시범 구성입니다. 루미가 안내하는 순서대로 눌러보세요.</p>
-    </section>
-    ${handLetterPad(starter, progress.completedLessonIds)}
-    <section class="sectionTitle">
-      <span>Mission</span>
-      <h2>상황 미션 포털</h2>
-      <p class="lead">상황별 표현 학습을 넣을 수 있는 자리입니다. 지금은 구조만 열어두었습니다.</p>
-    </section>
-    ${missionPortals()}
   `;
 }
 
