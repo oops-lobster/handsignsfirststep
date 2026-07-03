@@ -220,7 +220,19 @@ function devReferenceCapture() {
 }
 
 function practiceRoute(id) {
-  import("/js/practice.js?v=20260703-practice-meta").then(module => module.renderPractice(app, id, repo));
+  app.innerHTML = `
+    <section class="panel">
+      <p class="eyebrow">Practice</p>
+      <h1>연습 화면을 준비하고 있어요.</h1>
+      <p class="lead">국립수어사전 기준 영상을 불러오는 중입니다. 잠시만 기다려 주세요.</p>
+      <div class="notice">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</div>
+    </section>
+  `;
+  import("/js/practice.js?v=20260703-practice-meta")
+    .then(module => module.renderPractice(app, id, repo))
+    .catch(error => {
+      app.innerHTML = `<section class="panel danger"><h1>연습 화면을 불러오지 못했어요.</h1><p>${html(error.message)}</p></section>`;
+    });
 }
 
 async function render() {
