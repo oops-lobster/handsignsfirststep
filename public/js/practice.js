@@ -96,6 +96,13 @@ export async function renderPractice(app, id, repo) {
       <h1>${html(lesson.symbol)} 따라 하기</h1>
       <p class="lead">기준 영상을 보며 천천히 따라 해보세요. 카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p>
     </section>
+    <nav class="stepper" aria-label="학습 단계">
+      <a href="/learn/fingerspelling/${html(lesson.id)}">보기</a>
+      <a href="/learn/fingerspelling/${html(lesson.id)}">이해하기</a>
+      <span data-active="true" aria-current="step">따라 하기</span>
+      <a href="/learn/fingerspelling/${html(lesson.id)}#quiz">확인하기</a>
+      <a href="/progress">완료</a>
+    </nav>
     <section class="cameraGrid">
       <article class="videoCard">
         <h2>기준 영상</h2>
@@ -103,6 +110,14 @@ export async function renderPractice(app, id, repo) {
         <div class="signGuide">
           <strong>사전 영상 기준으로 따라 해요</strong>
           <p>${html(entry?.description || "아직 사전 설명을 불러오지 못했습니다. 기준 영상을 보고 손 모양과 방향을 천천히 확인해 주세요.")}</p>
+        </div>
+        <div class="referenceChecklist" aria-label="사전 영상 기준 확인 항목">
+          <strong>따라 할 때 볼 부분</strong>
+          <ul>
+            <li>손가락이 펴지거나 접힌 모양</li>
+            <li>엄지와 다른 손가락 사이의 거리</li>
+            <li>손바닥과 손등이 향하는 방향</li>
+          </ul>
         </div>
         <p class="meta">${html(entry?.attribution || "영상 출처: 국립국어원 한국수어사전")}</p>
       </article>
@@ -124,6 +139,17 @@ export async function renderPractice(app, id, repo) {
         <div id="feedbackList" class="feedbackList" aria-live="polite"></div>
         <p class="privacyNote">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p>
       </article>
+    </section>
+    <section class="panel practiceNext">
+      <div>
+        <p class="eyebrow">Next</p>
+        <h2>따라 했다면 짧게 확인해볼까요?</h2>
+        <p class="lead">기준 영상을 다시 보고, 학습 화면의 확인하기 문항으로 이어갈 수 있어요.</p>
+      </div>
+      <div class="actions">
+        <a class="button secondary" href="/learn/fingerspelling/${html(lesson.id)}">학습 화면으로 돌아가기</a>
+        <a class="button" href="/learn/fingerspelling/${html(lesson.id)}#quiz">확인하기로 이동</a>
+      </div>
     </section>
   `;
 

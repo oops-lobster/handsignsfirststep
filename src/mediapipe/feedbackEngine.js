@@ -73,7 +73,7 @@ export function evaluateGeneralHandFeedback({ hands = [], history = [], referenc
     messages.push({ state: "success", text: "좋아요! 손 모양을 잘 유지했어요.", priority: 30 });
   }
   if (referenceAvailable) {
-    messages.push({ state: "dictionary_reference", text: "사전 영상을 기준으로 손 모양과 방향을 천천히 맞춰보세요.", priority: 25 });
+    messages.push({ state: "dictionary_reference", text: "사전 영상처럼 손가락을 펴고 접은 모양과 손바닥 방향을 같이 확인해보세요.", priority: 58 });
   } else {
     messages.push({ state: "reference_unavailable", text: "현재는 손의 위치와 화면 상태를 중심으로 안내하고 있어요.", priority: 20 });
   }
