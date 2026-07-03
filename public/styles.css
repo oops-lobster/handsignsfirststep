@@ -85,8 +85,32 @@ button::before, .button::before, .palmButton::before {
   font-size: 0.72rem;
   font-weight: 950;
 }
-button:disabled { cursor: default; opacity: 0.62; box-shadow: none; }
-.button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.56; pointer-events: auto; filter: grayscale(0.35); }
+button:disabled {
+  cursor: default;
+  opacity: 1;
+  color: #6f5847;
+  background: #f4ead4;
+  border-color: rgba(106, 67, 31, 0.22);
+  box-shadow: 0 5px 0 rgba(106, 67, 31, 0.1);
+}
+button:disabled::before {
+  background: #fff9df;
+  color: #8a6b53;
+}
+.button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 1;
+  pointer-events: auto;
+  color: #6f5847;
+  background: #f4ead4;
+  border-color: rgba(106, 67, 31, 0.22);
+  box-shadow: 0 5px 0 rgba(106, 67, 31, 0.1);
+  filter: none;
+}
+.button[aria-disabled="true"]::before {
+  background: #fff9df;
+  color: #8a6b53;
+}
 button.secondary, .button.secondary, .palmButton--soft {
   color: var(--rumi-brown);
   background: var(--secondary-soft);
@@ -486,6 +510,11 @@ main {
   font-weight: 900;
 }
 .stepper [data-active="true"] { background: var(--rumi-yellow); color: var(--rumi-brown); border-color: rgba(106, 67, 31, 0.2); }
+.stepper span[aria-disabled="true"] {
+  color: #7b6250;
+  background: #f4ead4;
+  border-color: rgba(106, 67, 31, 0.22);
+}
 
 video { width: 100%; border-radius: 28px; background: #222; }
 .videoBubble {
