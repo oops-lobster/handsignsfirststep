@@ -59,6 +59,9 @@ function metaLabel(value, goodText, okText, waitText = "대기 중") {
 
 function renderEvaluationMeta(meta) {
   const detectedText = meta.detected ? `${meta.handCount}개 손 감지` : "손을 기다리는 중";
+  const guideText = meta.referenceMode === "dictionary-video-reference"
+    ? "국립수어사전 기준 영상을 보며 손 모양과 방향을 맞춰보는 연습입니다. 앱은 공식 채점 대신 화면 상태와 기본 손 상태를 안내합니다."
+    : "현재 피드백은 공식 채점이 아니라 카메라 안에서 손이 잘 보이는지 확인하는 연습 안내입니다.";
   const items = [
     ["손 감지", detectedText],
     ["화면 위치", metaLabel(meta.centerScore, "가운데에 잘 보여요", "조금 더 가운데로")],
@@ -73,7 +76,7 @@ function renderEvaluationMeta(meta) {
           <strong>${html(value)}</strong>
         </div>
       `).join("")}
-      <p>현재 피드백은 공식 채점이 아니라 카메라 안에서 손이 잘 보이는지 확인하는 연습 안내입니다.</p>
+      <p>${html(guideText)}</p>
     </div>
   `;
 }
@@ -84,6 +87,7 @@ export async function renderPractice(app, id, repo) {
     api(`/api/dictionary/lesson/${encodeURIComponent(id)}`)
   ]);
   const entry = dictionary.entries?.[0];
+  const hasDictionaryReference = Boolean(entry?.videoUrl);
   const progress = repo.getProgress();
 
   app.innerHTML = `
@@ -97,7 +101,7 @@ export async function renderPractice(app, id, repo) {
         <h2>기준 영상</h2>
         ${entry?.videoUrl ? `<video class="referenceVideo" src="${html(entry.videoUrl)}" poster="${html(entry.thumbnailUrl || "")}" controls playsinline preload="metadata"></video>` : `<div class="notice danger">사전 영상 연결 확인 중입니다.</div>`}
         <div class="signGuide">
-          <strong>어떻게 따라 하나요?</strong>
+          <strong>사전 영상 기준으로 따라 해요</strong>
           <p>${html(entry?.description || "아직 사전 설명을 불러오지 못했습니다. 기준 영상을 보고 손 모양과 방향을 천천히 확인해 주세요.")}</p>
         </div>
         <p class="meta">${html(entry?.attribution || "영상 출처: 국립국어원 한국수어사전")}</p>
@@ -116,7 +120,7 @@ export async function renderPractice(app, id, repo) {
           <button id="completePractice" class="ghost">연습 완료 저장</button>
         </div>
         <div id="cameraStatus" class="notice">카메라를 시작하기 전입니다.</div>
-        <div id="evaluationMeta">${renderEvaluationMeta({ detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 })}</div>
+        <div id="evaluationMeta">${renderEvaluationMeta({ detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0, referenceMode: hasDictionaryReference ? "dictionary-video-reference" : "general-camera-check" })}</div>
         <div id="feedbackList" class="feedbackList" aria-live="polite"></div>
         <p class="privacyNote">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p>
       </article>
@@ -139,7 +143,7 @@ export async function renderPractice(app, id, repo) {
   let pendingFeedbackKey = "";
   let pendingFeedbackCount = 0;
   let stableFeedback = [];
-  let stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 };
+  let stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0, referenceMode: hasDictionaryReference ? "dictionary-video-reference" : "general-camera-check" };
   const history = [];
 
   function resizeCanvas() {
@@ -167,7 +171,7 @@ export async function renderPractice(app, id, repo) {
         } else {
           canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         }
-        const { feedback, meta } = evaluatePracticeFrame({ hands, history, referenceAvailable: false });
+        const { feedback, meta } = evaluatePracticeFrame({ hands, history, referenceAvailable: hasDictionaryReference });
         const feedbackKey = feedback.map(item => item.state).join("|");
         if (feedbackKey === stableFeedbackKey) {
           stableFeedback = feedback;
@@ -266,9 +270,9 @@ export async function renderPractice(app, id, repo) {
     pendingFeedbackKey = "";
     pendingFeedbackCount = 0;
     stableFeedback = [];
-    stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 };
+    stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0, referenceMode: hasDictionaryReference ? "dictionary-video-reference" : "general-camera-check" };
     feedbackList.innerHTML = "";
-    evaluationMeta.innerHTML = renderEvaluationMeta({ detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 });
+    evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
     status.textContent = running ? "다시 천천히 손을 보여주세요." : "카메라를 시작하기 전입니다.";
     completeButton.disabled = false;
     completeButton.textContent = "연습 완료 저장";

@@ -35,7 +35,7 @@ export function evaluatePracticeFrame({ hands = [], history = [], referenceAvail
       centerScore: detected ? distanceFromCenterScore(box) : 0,
       sizeScore: detected ? sizeFitScore(box) : 0,
       stabilityScore: detected ? stabilityScore(history) : 0,
-      referenceMode: referenceAvailable ? "reviewed-reference" : "general-camera-check",
+      referenceMode: referenceAvailable ? "dictionary-video-reference" : "general-camera-check",
       primaryState: feedback[0]?.state || "waiting"
     }
   };
@@ -72,7 +72,9 @@ export function evaluateGeneralHandFeedback({ hands = [], history = [], referenc
   if (stable && !messages.length) {
     messages.push({ state: "success", text: "좋아요! 손 모양을 잘 유지했어요.", priority: 30 });
   }
-  if (!referenceAvailable) {
+  if (referenceAvailable) {
+    messages.push({ state: "dictionary_reference", text: "사전 영상을 기준으로 손 모양과 방향을 천천히 맞춰보세요.", priority: 25 });
+  } else {
     messages.push({ state: "reference_unavailable", text: "현재는 손의 위치와 화면 상태를 중심으로 안내하고 있어요.", priority: 20 });
   }
 

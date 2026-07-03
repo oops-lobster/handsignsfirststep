@@ -32,3 +32,10 @@ test("practice evaluation includes learner-facing meta", () => {
   assert.ok(evaluation.meta.centerScore > 0);
   assert.ok(evaluation.feedback.length <= 2);
 });
+
+test("practice evaluation can use dictionary video as beginner reference", () => {
+  const evaluation = evaluatePracticeFrame({ hands: [centeredHand], history: [centeredHand, centeredHand, centeredHand, centeredHand], referenceAvailable: true });
+  assert.equal(evaluation.meta.referenceMode, "dictionary-video-reference");
+  assert.ok(evaluation.feedback.some(item => item.state === "dictionary_reference" || item.state === "success"));
+  assert.ok(evaluation.feedback.length <= 2);
+});
