@@ -10,7 +10,7 @@ test("parseApiPayload parses XML items", () => {
 test("adapter normalizes dictionary entries", async () => {
   const fetchImpl = async () => ({
     ok: true,
-    text: async () => "<response><body><items><item><title>ㅈ</title><subDescription>http://sldict.korean.go.kr/sample.mp4</subDescription><url>http://sldict.korean.go.kr/front/sign/signContentsView.do?origin_no=1</url></item></items></body></response>"
+    text: async () => "<response><body><items><item><title>ㅈ</title><subDescription>http://sldict.korean.go.kr/sample.mp4</subDescription><imageObject>http://sldict.korean.go.kr/tiny_215X161.jpg</imageObject><signImages>http://sldict.korean.go.kr/large_700X466.jpg</signImages><url>http://sldict.korean.go.kr/front/sign/signContentsView.do?origin_no=1</url></item></items></body></response>"
   });
   const adapter = new SignDictionaryAdapter({
     env: {
@@ -26,4 +26,5 @@ test("adapter normalizes dictionary entries", async () => {
   assert.equal(result.status, "success");
   assert.equal(result.entries[0].title, "ㅈ");
   assert.equal(result.entries[0].videoUrl, "https://sldict.korean.go.kr/sample.mp4");
+  assert.equal(result.entries[0].thumbnailUrl, "https://sldict.korean.go.kr/large_700X466.jpg");
 });
