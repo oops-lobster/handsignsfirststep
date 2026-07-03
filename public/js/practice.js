@@ -97,11 +97,11 @@ export async function renderPractice(app, id, repo) {
       <p class="lead">기준 영상을 보며 천천히 따라 해보세요. 카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p>
     </section>
     <nav class="stepper" aria-label="학습 단계">
-      <a href="/learn/fingerspelling/${html(lesson.id)}">보기</a>
-      <a href="/learn/fingerspelling/${html(lesson.id)}">이해하기</a>
+      <a href="/learn/fingerspelling/${html(lesson.id)}#watch">보기</a>
+      <a href="/learn/fingerspelling/${html(lesson.id)}#understand">이해하기</a>
       <span data-active="true" aria-current="step">따라 하기</span>
       <a href="/learn/fingerspelling/${html(lesson.id)}#quiz">확인하기</a>
-      <a href="/progress">완료</a>
+      <a href="/learn/fingerspelling/${html(lesson.id)}#complete">완료</a>
     </nav>
     <section class="cameraGrid">
       <article class="videoCard">

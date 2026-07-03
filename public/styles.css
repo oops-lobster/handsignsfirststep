@@ -48,6 +48,8 @@ main { max-width: 1080px; margin: 0 auto; padding: clamp(1rem, 3.5vw, 1.8rem); }
 .meta { color: var(--muted); display: flex; gap: 0.45rem; flex-wrap: wrap; }
 .pill { display: inline-flex; align-items: center; border-radius: 999px; background: var(--primary-soft); color: var(--primary); padding: 0.35rem 0.68rem; font-size: 0.82rem; font-weight: 800; }
 .layoutTwo { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr); gap: 1.2rem; align-items: start; }
+.learningStage { scroll-margin-top: 1rem; }
+.stageNav { display: flex; gap: 0.65rem; flex-wrap: wrap; margin-top: 1rem; }
 .stepper { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
 .stepper a, .stepper span { padding: 0.55rem 0.85rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); text-decoration: none; font-weight: 750; }
 .stepper [data-active="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
@@ -156,6 +158,16 @@ video { width: 100%; border-radius: 22px; background: #222; }
   padding: 1rem;
 }
 .quizCard h3 { margin: 0.3rem 0 0.9rem; font-size: 1.12rem; }
+.quizImage {
+  display: block;
+  width: min(100%, 360px);
+  max-height: 240px;
+  object-fit: contain;
+  margin: 0 0 1rem;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
 .quizChoices { display: flex; gap: 0.7rem; flex-wrap: wrap; }
 .quizChoice[aria-pressed="true"] { outline: 3px solid rgba(47, 111, 237, 0.35); outline-offset: 2px; }
 .quizResult { margin-bottom: 0; }

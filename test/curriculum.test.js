@@ -16,9 +16,11 @@ test("curriculum does not pretend expert review", () => {
   assert.ok(fingerspellingLessons.every(lesson => lesson.reviewStatus !== "expert-reviewed"));
 });
 
-test("starter quiz has three to five questions", () => {
+test("starter quiz asks a focused mixed-choice symbol question", () => {
   const quiz = buildQuiz(starterLessons[0].id);
-  assert.ok(quiz.length >= 3);
-  assert.ok(quiz.length <= 5);
-  assert.ok(quiz.every(item => item.choices.some(choice => choice.id === item.answerId)));
+  assert.equal(quiz.length, 1);
+  assert.equal(quiz[0].prompt, "오늘 배운 게 뭘까요?");
+  assert.equal(quiz[0].choices.length, starterLessons.length);
+  assert.ok(quiz[0].choices.some(choice => choice.id === quiz[0].answerId));
+  assert.notEqual(quiz[0].choices[0].id, quiz[0].answerId);
 });
