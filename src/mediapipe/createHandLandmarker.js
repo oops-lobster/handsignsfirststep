@@ -1,7 +1,6 @@
 export async function createHandLandmarker({ modelAssetPath = "/models/hand_landmarker.task", runningMode = "VIDEO" } = {}) {
-  const version = await loadVisionTasksVersion();
-  const vision = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${version}/vision_bundle.mjs`);
-  const filesetResolver = await vision.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${version}/wasm`);
+  const { vision, wasmPath } = await loadVisionTasks();
+  const filesetResolver = await vision.FilesetResolver.forVisionTasks(wasmPath);
   return vision.HandLandmarker.createFromOptions(filesetResolver, {
     baseOptions: {
       modelAssetPath,
@@ -12,7 +11,16 @@ export async function createHandLandmarker({ modelAssetPath = "/models/hand_land
   });
 }
 
-async function loadVisionTasksVersion() {
+async function loadVisionTasks() {
+  try {
+    return {
+      vision: await import("/vendor/mediapipe/vision_bundle.mjs"),
+      wasmPath: "/vendor/mediapipe/wasm"
+    };
+  } catch {
+    // Fall back to CDN only when the local package is unavailable.
+  }
+
   const versions = ["0.10.35", "0.10.21"];
   for (const version of versions) {
     try {
@@ -20,7 +28,12 @@ async function loadVisionTasksVersion() {
         method: "HEAD",
         cache: "force-cache"
       });
-      if (response.ok) return version;
+      if (response.ok) {
+        return {
+          vision: await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${version}/vision_bundle.mjs`),
+          wasmPath: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${version}/wasm`
+        };
+      }
     } catch {
       // Try the next pinned version before surfacing a user-facing error.
     }

@@ -219,7 +219,7 @@ function devReferenceCapture() {
 }
 
 function practiceRoute(id) {
-  import("/js/practice.js").then(module => module.renderPractice(app, id, repo));
+  import("/js/practice.js?v=20260703-camera").then(module => module.renderPractice(app, id, repo));
 }
 
 async function render() {

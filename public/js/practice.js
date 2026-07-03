@@ -1,5 +1,5 @@
-import { createHandLandmarker } from "/src/mediapipe/createHandLandmarker.js";
-import { evaluateGeneralHandFeedback } from "/src/mediapipe/feedbackEngine.js";
+import { createHandLandmarker } from "/src/mediapipe/createHandLandmarker.js?v=20260703-camera";
+import { evaluateGeneralHandFeedback } from "/src/mediapipe/feedbackEngine.js?v=20260703-camera";
 
 function html(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -42,7 +42,11 @@ export async function renderPractice(app, id, repo) {
     <section class="cameraGrid">
       <article class="videoCard">
         <h2>기준 영상</h2>
-        ${entry?.videoUrl ? `<video src="${html(entry.videoUrl)}" poster="${html(entry.thumbnailUrl || "")}" controls playsinline preload="metadata"></video>` : `<div class="notice danger">사전 영상 연결 확인 중입니다.</div>`}
+        ${entry?.videoUrl ? `<video class="referenceVideo" src="${html(entry.videoUrl)}" poster="${html(entry.thumbnailUrl || "")}" controls playsinline preload="metadata"></video>` : `<div class="notice danger">사전 영상 연결 확인 중입니다.</div>`}
+        <div class="signGuide">
+          <strong>어떻게 따라 하나요?</strong>
+          <p>${html(entry?.description || "아직 사전 설명을 불러오지 못했습니다. 기준 영상을 보고 손 모양과 방향을 천천히 확인해 주세요.")}</p>
+        </div>
         <p class="meta">${html(entry?.attribution || "영상 출처: 국립국어원 한국수어사전")}</p>
       </article>
       <article class="videoCard">
@@ -96,20 +100,38 @@ export async function renderPractice(app, id, repo) {
 
   document.querySelector("#startCamera").addEventListener("click", async () => {
     try {
+      if (!window.isSecureContext) {
+        throw new Error("카메라는 HTTPS 또는 localhost 환경에서만 사용할 수 있습니다.");
+      }
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("이 브라우저에서는 카메라 입력을 사용할 수 없습니다. Safari/Chrome 최신 버전에서 다시 열어주세요.");
+      }
       status.textContent = "모델을 불러오는 중입니다.";
       landmarker ||= await createHandLandmarker({ runningMode: "VIDEO" });
       status.textContent = "카메라 권한을 요청합니다.";
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
       video.srcObject = stream;
       await video.play();
       running = true;
       repo.saveLastLesson(lesson.id);
       loop();
     } catch (error) {
-      status.textContent = `카메라 또는 모델을 시작하지 못했습니다. ${error.message}`;
-      const message = error.message.includes("MediaPipe")
-        ? "MediaPipe 모듈을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
-        : "모델 파일은 /models/hand_landmarker.task 경로에 배치해야 합니다.";
+      let message = "모델 파일은 /models/hand_landmarker.task 경로에 배치해야 합니다.";
+      if (error.message.includes("MediaPipe")) {
+        message = "MediaPipe 모듈을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.";
+      } else if (error.name === "NotAllowedError" || error.message.includes("Permission denied")) {
+        message = "카메라 권한이 거부되었습니다. 브라우저 주소창의 권한 설정에서 카메라를 허용해 주세요.";
+      } else if (error.message.includes("카메라")) {
+        message = error.message;
+      }
+      status.textContent = message;
       feedbackList.innerHTML = `<div class="feedbackItem">${html(message)}</div>`;
     }
   });

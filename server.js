@@ -7,6 +7,7 @@ import { fingerspellingLessons, findLesson } from "./src/data/fingerspelling/cur
 
 const rootDir = process.cwd();
 const publicDir = join(rootDir, "public");
+const mediaPipeDir = join(rootDir, "node_modules", "@mediapipe", "tasks-vision");
 await loadEnv(join(rootDir, ".env"));
 
 const port = Number(process.env.PORT || 3001);
@@ -17,14 +18,22 @@ const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
-  ".task": "application/octet-stream"
+  ".task": "application/octet-stream",
+  ".wasm": "application/wasm"
 };
+
+function cacheControlFor(path) {
+  const extension = extname(path);
+  if ([".html", ".js", ".mjs", ".css"].includes(extension)) return "no-store";
+  return "public, max-age=3600";
+}
 
 async function loadEnv(path) {
   try {
@@ -52,6 +61,11 @@ function sendJson(res, status, body) {
 }
 
 function safePath(pathname) {
+  if (pathname.startsWith("/vendor/mediapipe/")) {
+    const relativePath = pathname.replace("/vendor/mediapipe/", "");
+    const normalizedVendor = normalize(decodeURIComponent(relativePath)).replace(/^(\.\.[/\\])+/, "");
+    return join(mediaPipeDir, normalizedVendor);
+  }
   if (pathname.startsWith("/src/")) {
     const normalizedSrc = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, "");
     return join(rootDir, normalizedSrc);
@@ -66,7 +80,7 @@ async function serveStatic(req, res, url) {
     const file = await readFile(path);
     res.writeHead(200, {
       "content-type": mimeTypes[extname(path)] || "application/octet-stream",
-      "cache-control": extname(path) === ".html" ? "no-store" : "public, max-age=3600"
+      "cache-control": cacheControlFor(path)
     });
     res.end(file);
   } catch {

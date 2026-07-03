@@ -51,6 +51,24 @@ main { max-width: 1160px; margin: 0 auto; padding: clamp(1rem, 4vw, 2rem); }
 .stepper span { padding: 0.55rem 0.85rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
 .stepper [data-active="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
 video { width: 100%; border-radius: 22px; background: #222; }
+.referenceVideo {
+  display: block;
+  width: min(100%, 720px);
+  max-height: 520px;
+  margin: 0 auto;
+  object-fit: contain;
+  image-rendering: auto;
+}
+.signGuide {
+  margin-top: 1rem;
+  border-radius: 20px;
+  background: var(--primary-soft);
+  color: var(--text);
+  padding: 1rem;
+  line-height: 1.65;
+}
+.signGuide strong { display: block; color: var(--primary); margin-bottom: 0.35rem; }
+.signGuide p { margin: 0; }
 .tips li { margin: 0.5rem 0; }
 .cameraGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .cameraBox { position: relative; overflow: hidden; background: #1f1b19; border-radius: 24px; min-height: 340px; }
