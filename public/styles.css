@@ -19,6 +19,7 @@ body { margin: 0; min-height: 100dvh; }
 a { color: inherit; }
 button, input, select { font: inherit; }
 button, .button { min-height: 44px; border: 0; border-radius: 999px; padding: 0.85rem 1.2rem; background: var(--primary); color: #fff; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.62; }
 button.secondary, .button.secondary { color: var(--text); background: var(--secondary-soft); }
 button.ghost, .button.ghost { color: var(--primary); background: var(--primary-soft); }
 button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid #2f6fed; outline-offset: 3px; }
@@ -71,11 +72,70 @@ video { width: 100%; border-radius: 22px; background: #222; }
 .signGuide p { margin: 0; }
 .tips li { margin: 0.5rem 0; }
 .cameraGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.cameraBox { position: relative; overflow: hidden; background: #1f1b19; border-radius: 24px; min-height: 340px; }
+.cameraBox { position: relative; overflow: hidden; background: #1f1b19; border-radius: 24px; min-height: 340px; border: 1px solid rgba(62, 52, 47, 0.14); }
+.cameraBox::before {
+  content: "카메라 준비 중";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 249, 242, 0.64);
+  font-weight: 850;
+  letter-spacing: -0.01em;
+}
 .cameraBox video, .cameraBox canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cameraBox video { z-index: 1; }
+.cameraBox canvas { z-index: 2; pointer-events: none; }
 .cameraBox[data-mirror="true"] video, .cameraBox[data-mirror="true"] canvas { transform: scaleX(-1); }
+.countdownOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  background: rgba(31, 27, 25, 0.28);
+  color: #fff;
+  font-size: clamp(3rem, 11vw, 7rem);
+  font-weight: 950;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+}
+.countdownOverlay[hidden] { display: none; }
 .feedbackList { display: grid; gap: 0.6rem; margin-top: 1rem; }
 .feedbackItem { border-radius: 18px; background: var(--secondary-soft); color: #2e5840; padding: 0.85rem 1rem; font-weight: 750; }
+.feedbackItem.success { background: var(--primary-soft); color: var(--primary); }
+.evaluationMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+.evaluationMetaItem {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: #fffdf9;
+  padding: 0.8rem 0.9rem;
+  min-height: 82px;
+}
+.evaluationMetaItem span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+.evaluationMetaItem strong {
+  display: block;
+  color: var(--text);
+  line-height: 1.35;
+}
+.evaluationMeta p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+.privacyNote { color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
 .quizChoices { display: flex; gap: 0.7rem; flex-wrap: wrap; }
 .progressBar { height: 14px; border-radius: 999px; background: var(--border); overflow: hidden; }
 .progressBar span { display: block; height: 100%; background: var(--success); }
@@ -85,6 +145,7 @@ video { width: 100%; border-radius: 22px; background: #222; }
 @media (max-width: 760px) {
   .siteHeader { align-items: flex-start; flex-direction: column; }
   .hero, .layoutTwo, .cameraGrid { grid-template-columns: 1fr; }
+  .evaluationMeta { grid-template-columns: 1fr; }
   .siteFooter { align-items: flex-start; flex-direction: column; }
 }
 

@@ -1,5 +1,46 @@
 import { calculateHandBoundingBox, isHandStable } from "./landmarkUtils.js";
 
+function clampPercent(value) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function distanceFromCenterScore(box) {
+  if (!box) return 0;
+  const distance = Math.hypot(box.centerX - 0.5, box.centerY - 0.5);
+  return clampPercent(100 - distance / 0.42 * 100);
+}
+
+function sizeFitScore(box) {
+  if (!box) return 0;
+  const target = 0.38;
+  const size = Math.max(box.width, box.height);
+  return clampPercent(100 - Math.abs(size - target) / 0.38 * 100);
+}
+
+function stabilityScore(history) {
+  if (!Array.isArray(history) || history.length < 4) return 0;
+  return isHandStable(history) ? 92 : 46;
+}
+
+export function evaluatePracticeFrame({ hands = [], history = [], referenceAvailable = false }) {
+  const feedback = evaluateGeneralHandFeedback({ hands, history, referenceAvailable });
+  const box = calculateHandBoundingBox(hands[0]);
+  const detected = Boolean(hands.length && box);
+
+  return {
+    feedback,
+    meta: {
+      detected,
+      handCount: hands.length,
+      centerScore: detected ? distanceFromCenterScore(box) : 0,
+      sizeScore: detected ? sizeFitScore(box) : 0,
+      stabilityScore: detected ? stabilityScore(history) : 0,
+      referenceMode: referenceAvailable ? "reviewed-reference" : "general-camera-check",
+      primaryState: feedback[0]?.state || "waiting"
+    }
+  };
+}
+
 export function evaluateGeneralHandFeedback({ hands = [], history = [], referenceAvailable = false }) {
   const messages = [];
   if (!hands.length) {
@@ -24,8 +65,12 @@ export function evaluateGeneralHandFeedback({ hands = [], history = [], referenc
   if (hands.length > 1) {
     messages.push({ state: "two_hands", text: "두 손이 보여요. 이번 연습은 기준 영상처럼 필요한 손만 천천히 확인해요.", priority: 45 });
   }
-  if (!isHandStable(history)) {
+  const stable = isHandStable(history);
+  if (!stable) {
     messages.push({ state: "unstable", text: "손 모양을 잠시 유지해볼까요?", priority: 55 });
+  }
+  if (stable && !messages.length) {
+    messages.push({ state: "success", text: "좋아요! 손 모양을 잘 유지했어요.", priority: 30 });
   }
   if (!referenceAvailable) {
     messages.push({ state: "reference_unavailable", text: "현재는 손의 위치와 화면 상태를 중심으로 안내하고 있어요.", priority: 20 });

@@ -1,5 +1,5 @@
-import { createHandLandmarker } from "/src/mediapipe/createHandLandmarker.js?v=20260703-camera";
-import { evaluateGeneralHandFeedback } from "/src/mediapipe/feedbackEngine.js?v=20260703-camera";
+import { createHandLandmarker } from "/src/mediapipe/createHandLandmarker.js?v=20260703-practice-meta";
+import { evaluatePracticeFrame } from "/src/mediapipe/feedbackEngine.js?v=20260703-practice-meta";
 
 function html(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -12,17 +12,70 @@ async function api(path) {
   return data;
 }
 
-function drawLandmarks(canvas, hands) {
+const handConnections = [
+  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 5], [5, 6], [6, 7], [7, 8],
+  [0, 9], [9, 10], [10, 11], [11, 12],
+  [0, 13], [13, 14], [14, 15], [15, 16],
+  [0, 17], [17, 18], [18, 19], [19, 20],
+  [5, 9], [9, 13], [13, 17]
+];
+
+function drawHandOverlay(canvas, hands) {
   const context = canvas.getContext("2d");
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#d97860";
-  context.strokeStyle = "#ffffff";
-  hands.flat().forEach(point => {
-    context.beginPath();
-    context.arc(point.x * canvas.width, point.y * canvas.height, 4, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
+  hands.forEach(hand => {
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "rgba(255, 249, 242, 0.86)";
+    context.lineWidth = Math.max(2, canvas.width * 0.004);
+    handConnections.forEach(([from, to]) => {
+      const a = hand[from];
+      const b = hand[to];
+      if (!a || !b) return;
+      context.beginPath();
+      context.moveTo(a.x * canvas.width, a.y * canvas.height);
+      context.lineTo(b.x * canvas.width, b.y * canvas.height);
+      context.stroke();
+    });
+
+    hand.forEach((point, index) => {
+      const radius = [4, 8, 12, 16, 20].includes(index) ? 6 : 4;
+      context.beginPath();
+      context.arc(point.x * canvas.width, point.y * canvas.height, radius, 0, Math.PI * 2);
+      context.fillStyle = [4, 8, 12, 16, 20].includes(index) ? "#d97860" : "#fff9f2";
+      context.fill();
+      context.strokeStyle = "rgba(62, 52, 47, 0.3)";
+      context.lineWidth = 1.5;
+      context.stroke();
+    });
   });
+}
+
+function metaLabel(value, goodText, okText, waitText = "대기 중") {
+  if (!value) return waitText;
+  return value >= 72 ? goodText : okText;
+}
+
+function renderEvaluationMeta(meta) {
+  const detectedText = meta.detected ? `${meta.handCount}개 손 감지` : "손을 기다리는 중";
+  const items = [
+    ["손 감지", detectedText],
+    ["화면 위치", metaLabel(meta.centerScore, "가운데에 잘 보여요", "조금 더 가운데로")],
+    ["손 크기", metaLabel(meta.sizeScore, "크기가 적당해요", "거리 조정 필요")],
+    ["유지 상태", metaLabel(meta.stabilityScore, "잠시 잘 유지 중", "조금만 천천히")]
+  ];
+  return `
+    <div class="evaluationMeta" aria-label="연습 상태">
+      ${items.map(([label, value]) => `
+        <div class="evaluationMetaItem">
+          <span>${html(label)}</span>
+          <strong>${html(value)}</strong>
+        </div>
+      `).join("")}
+      <p>현재 피드백은 공식 채점이 아니라 카메라 안에서 손이 잘 보이는지 확인하는 연습 안내입니다.</p>
+    </div>
+  `;
 }
 
 export async function renderPractice(app, id, repo) {
@@ -54,25 +107,33 @@ export async function renderPractice(app, id, repo) {
         <div class="cameraBox" data-mirror="${progress.settings.mirrorCamera}">
           <video id="cameraVideo" autoplay muted playsinline></video>
           <canvas id="landmarkCanvas" aria-label="카메라가 감지한 손 위치 점 표시"></canvas>
+          <div id="countdownOverlay" class="countdownOverlay" hidden></div>
         </div>
         <div class="actions">
           <button id="startCamera">카메라 시작</button>
           <button id="toggleLandmarks" class="secondary">${progress.settings.showLandmarks ? "손 위치 점 끄기" : "손 위치 점 켜기"}</button>
-          <button id="completePractice" class="ghost">학습 완료</button>
+          <button id="resetPractice" class="secondary">다시 연습</button>
+          <button id="completePractice" class="ghost">연습 완료 저장</button>
         </div>
         <div id="cameraStatus" class="notice">카메라를 시작하기 전입니다.</div>
+        <div id="evaluationMeta">${renderEvaluationMeta({ detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 })}</div>
         <div id="feedbackList" class="feedbackList" aria-live="polite"></div>
+        <p class="privacyNote">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p>
       </article>
     </section>
   `;
 
   const video = document.querySelector("#cameraVideo");
   const canvas = document.querySelector("#landmarkCanvas");
+  const countdownOverlay = document.querySelector("#countdownOverlay");
   const status = document.querySelector("#cameraStatus");
   const feedbackList = document.querySelector("#feedbackList");
+  const evaluationMeta = document.querySelector("#evaluationMeta");
+  const completeButton = document.querySelector("#completePractice");
   let landmarker = null;
   let stream = null;
   let running = false;
+  let inferenceRunning = false;
   let lastVideoTime = -1;
   const history = [];
 
@@ -84,18 +145,52 @@ export async function renderPractice(app, id, repo) {
   async function loop() {
     if (!running || !landmarker) return;
     if (video.currentTime !== lastVideoTime && video.readyState >= 2) {
-      lastVideoTime = video.currentTime;
-      resizeCanvas();
-      const result = landmarker.detectForVideo(video, performance.now());
-      const hands = result.landmarks || [];
-      if (hands[0]) history.push(hands[0]);
-      while (history.length > 8) history.shift();
-      if (repo.getProgress().settings.showLandmarks) drawLandmarks(canvas, hands);
-      const feedback = evaluateGeneralHandFeedback({ hands, history, referenceAvailable: false });
-      feedbackList.innerHTML = feedback.map(item => `<div class="feedbackItem">${html(item.text)}</div>`).join("");
-      status.textContent = hands.length ? `${hands.length}개 손이 감지되고 있어요.` : "손이 아직 보이지 않아요.";
+      if (inferenceRunning) {
+        window.requestAnimationFrame(loop);
+        return;
+      }
+      inferenceRunning = true;
+      try {
+        lastVideoTime = video.currentTime;
+        resizeCanvas();
+        const result = landmarker.detectForVideo(video, performance.now());
+        const hands = result.landmarks || [];
+        if (hands[0]) history.push(hands[0]);
+        while (history.length > 8) history.shift();
+        if (repo.getProgress().settings.showLandmarks) {
+          drawHandOverlay(canvas, hands);
+        } else {
+          canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+        }
+        const { feedback, meta } = evaluatePracticeFrame({ hands, history, referenceAvailable: false });
+        feedbackList.innerHTML = feedback.map(item => `<div class="feedbackItem">${html(item.text)}</div>`).join("");
+        evaluationMeta.innerHTML = renderEvaluationMeta(meta);
+        status.textContent = hands.length ? `${hands.length}개 손이 감지되고 있어요.` : "손이 아직 보이지 않아요.";
+      } finally {
+        inferenceRunning = false;
+      }
     }
     window.requestAnimationFrame(loop);
+  }
+
+  function showCountdown() {
+    return new Promise(resolve => {
+      const steps = ["3", "2", "1", "시작"];
+      let index = 0;
+      countdownOverlay.hidden = false;
+      countdownOverlay.textContent = steps[index];
+      const timer = window.setInterval(() => {
+        index += 1;
+        countdownOverlay.textContent = steps[index] || "";
+        if (index >= steps.length - 1) {
+          window.clearInterval(timer);
+          window.setTimeout(() => {
+            countdownOverlay.hidden = true;
+            resolve();
+          }, 500);
+        }
+      }, 650);
+    });
   }
 
   document.querySelector("#startCamera").addEventListener("click", async () => {
@@ -119,6 +214,8 @@ export async function renderPractice(app, id, repo) {
       });
       video.srcObject = stream;
       await video.play();
+      status.textContent = "3초 뒤 연습을 시작합니다.";
+      await showCountdown();
       running = true;
       repo.saveLastLesson(lesson.id);
       loop();
@@ -143,9 +240,21 @@ export async function renderPractice(app, id, repo) {
     if (current) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
   });
 
-  document.querySelector("#completePractice").addEventListener("click", () => {
+  document.querySelector("#resetPractice").addEventListener("click", () => {
+    history.length = 0;
+    feedbackList.innerHTML = "";
+    evaluationMeta.innerHTML = renderEvaluationMeta({ detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 });
+    status.textContent = running ? "다시 천천히 손을 보여주세요." : "카메라를 시작하기 전입니다.";
+    completeButton.disabled = false;
+    completeButton.textContent = "연습 완료 저장";
+  });
+
+  completeButton.addEventListener("click", () => {
     repo.completeLesson(lesson.id);
-    status.textContent = "좋아요! 첫걸음을 잘 마쳤어요.";
+    status.textContent = "첫걸음을 잘 마쳤어요. 진도에 저장되었습니다.";
+    feedbackList.innerHTML = `<div class="feedbackItem success">천천히 반복하면 자연스럽게 익숙해질 거예요.</div>`;
+    completeButton.disabled = true;
+    completeButton.textContent = "저장 완료";
   });
 
   window.addEventListener("pagehide", () => {

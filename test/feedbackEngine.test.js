@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateGeneralHandFeedback } from "../src/mediapipe/feedbackEngine.js";
+import { evaluateGeneralHandFeedback, evaluatePracticeFrame } from "../src/mediapipe/feedbackEngine.js";
 
 const centeredHand = Array.from({ length: 21 }, (_, index) => ({
   x: 0.42 + (index % 5) * 0.04,
@@ -22,4 +22,13 @@ test("feedback limits messages to two", () => {
 test("feedback falls back when reference is unavailable", () => {
   const feedback = evaluateGeneralHandFeedback({ hands: [centeredHand], history: [centeredHand, centeredHand, centeredHand, centeredHand], referenceAvailable: false });
   assert.ok(feedback.some(item => ["reference_unavailable", "unstable"].includes(item.state)));
+});
+
+test("practice evaluation includes learner-facing meta", () => {
+  const evaluation = evaluatePracticeFrame({ hands: [centeredHand], history: [centeredHand, centeredHand, centeredHand, centeredHand], referenceAvailable: false });
+  assert.equal(evaluation.meta.detected, true);
+  assert.equal(evaluation.meta.handCount, 1);
+  assert.equal(evaluation.meta.referenceMode, "general-camera-check");
+  assert.ok(evaluation.meta.centerScore > 0);
+  assert.ok(evaluation.feedback.length <= 2);
 });

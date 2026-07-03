@@ -3,6 +3,7 @@ import { buildQuiz } from "/src/data/fingerspelling/quizData.js";
 
 const app = document.querySelector("#app");
 const repo = new LearningProgressRepository(window.localStorage);
+const isLocalDevelopment = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
 async function api(path) {
   const response = await fetch(path);
@@ -219,7 +220,7 @@ function devReferenceCapture() {
 }
 
 function practiceRoute(id) {
-  import("/js/practice.js?v=20260703-camera").then(module => module.renderPractice(app, id, repo));
+  import("/js/practice.js?v=20260703-practice-meta").then(module => module.renderPractice(app, id, repo));
 }
 
 async function render() {
@@ -231,7 +232,7 @@ async function render() {
     if (path.startsWith("/practice/fingerspelling/")) return practiceRoute(decodeURIComponent(path.split("/").pop()));
     if (path === "/progress") return await progressPage();
     if (path === "/about") return aboutPage();
-    if (path === "/dev/reference-capture") return devReferenceCapture();
+    if (path === "/dev/reference-capture") return isLocalDevelopment ? devReferenceCapture() : aboutPage();
     return await home();
   } catch (error) {
     app.innerHTML = `<section class="panel danger"><h1>페이지를 불러오지 못했어요.</h1><p>${html(error.message)}</p></section>`;
