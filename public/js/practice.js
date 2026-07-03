@@ -98,7 +98,7 @@ export async function renderPractice(app, id, repo) {
     </section>
     <nav class="stepper" aria-label="학습 단계">
       <a href="/learn/fingerspelling/${html(lesson.id)}#watch">보기</a>
-      <a href="/learn/fingerspelling/${html(lesson.id)}#understand">이해하기</a>
+      <a href="/learn/fingerspelling/${html(lesson.id)}#understand">손모양 익히기</a>
       <span data-active="true" aria-current="step">따라 하기</span>
       <a href="/learn/fingerspelling/${html(lesson.id)}#quiz">확인하기</a>
       <a href="/learn/fingerspelling/${html(lesson.id)}#complete">완료</a>

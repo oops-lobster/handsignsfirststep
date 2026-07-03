@@ -25,8 +25,15 @@ export const fingerspellingLessons = [
   { id: "i", symbol: "ㅣ", category: "vowel", order: 24, dictionaryQuery: "ㅣ", curriculumGroup: "browse", reviewStatus: "expert-review-pending", referenceFeedbackStatus: "general-only" }
 ].map(lesson => ({
   ...lesson,
-  learningTips: ["현재 사전 영상을 중심으로 학습할 수 있어요.", "세부 손 모양 설명은 전문가 검수 후 추가될 예정이에요."],
-  commonMistakes: ["전문가 검수 전", "손 모양 피드백 준비 중"]
+  learningTips: [
+    "펴진 손가락과 접힌 손가락을 먼저 구분해요.",
+    "엄지의 위치와 손바닥이 향하는 방향을 영상과 비교해요.",
+    "손목을 크게 돌리기보다 손 모양이 또렷하게 보이도록 멈춰서 확인해요."
+  ],
+  commonMistakes: [
+    "비슷한 지문자와 헷갈릴 수 있어요. 다음 단계에서 카메라로 천천히 비교합니다.",
+    "세부 기준은 전문가 검수 후 더 정확한 설명으로 보완될 예정입니다."
+  ]
 }));
 
 export const starterLessons = fingerspellingLessons.filter(lesson => lesson.curriculumGroup === "starter");

@@ -51,8 +51,8 @@ main { max-width: 1080px; margin: 0 auto; padding: clamp(1rem, 3.5vw, 1.8rem); }
 .learningStage { scroll-margin-top: 1rem; }
 .singleStage { max-width: 860px; margin: 0 auto; }
 .stageNav { display: flex; gap: 0.65rem; flex-wrap: wrap; margin-top: 1rem; }
-.stepper { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
-.stepper a, .stepper span { padding: 0.55rem 0.85rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); text-decoration: none; font-weight: 750; }
+.stepper { display: flex; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; margin: 1rem 0; padding-bottom: 0.15rem; scrollbar-width: thin; }
+.stepper a, .stepper span { flex: 0 0 auto; white-space: nowrap; padding: 0.55rem 0.85rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); text-decoration: none; font-weight: 750; }
 .stepper [data-active="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
 video { width: 100%; border-radius: 22px; background: #222; }
 .referenceVideo {

@@ -61,7 +61,7 @@ function renderQuizCard(item, index) {
 function renderLessonStepper(lessonId, currentStep) {
   const steps = [
     ["보기", `/learn/fingerspelling/${lessonId}#watch`],
-    ["이해하기", `/learn/fingerspelling/${lessonId}#understand`],
+    ["손모양 익히기", `/learn/fingerspelling/${lessonId}#understand`],
     ["따라 하기", `/practice/fingerspelling/${lessonId}`],
     ["확인하기", `/learn/fingerspelling/${lessonId}#quiz`],
     ["완료", `/learn/fingerspelling/${lessonId}#complete`]
@@ -83,7 +83,7 @@ function lessonStageFromHash() {
 function lessonStageLabel(stage) {
   return {
     watch: "보기",
-    understand: "이해하기",
+    understand: "손모양 익히기",
     quiz: "확인하기",
     complete: "완료"
   }[stage] || "보기";
@@ -171,7 +171,7 @@ async function lessonPage(id) {
         <p class="eyebrow">보기</p>
         ${renderVideo(entry)}
         <div class="stageNav">
-          <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#understand">다음: 이해하기</a>
+          <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#understand">다음: 손모양 익히기</a>
         </div>
       </section>
     `;
@@ -180,8 +180,9 @@ async function lessonPage(id) {
   if (stage === "understand") {
     stageMarkup = `
       <section id="understand" class="panel learningStage singleStage">
-        <p class="eyebrow">이해하기</p>
-        <h2>현재는 사전 영상을 중심으로 학습할 수 있어요.</h2>
+        <p class="eyebrow">손모양 익히기</p>
+        <h2>${html(lesson.symbol)} 손모양에서 먼저 볼 부분</h2>
+        <p class="lead">영상을 보기만 하고 바로 따라 하면 손가락 방향을 놓치기 쉬워요. 이 단계에서는 따라 하기 전에 손의 기준점을 먼저 확인합니다.</p>
         <ul class="tips">
           ${lesson.learningTips.map(tip => `<li>${html(tip)}</li>`).join("")}
           ${lesson.commonMistakes.map(item => `<li>${html(item)}</li>`).join("")}
@@ -239,7 +240,7 @@ async function lessonPage(id) {
     <section class="sectionTitle">
       <span>${categoryLabel(lesson.category)} · ${lesson.reviewStatus === "expert-reviewed" ? "전문가 검수 완료" : "전문가 검수 전"}</span>
       <h1><span class="symbol">${html(lesson.symbol)}</span> 지문자 배우기</h1>
-      <p class="lead">보기, 이해하기, 따라 하기, 확인하기, 완료 순서로 천천히 연습합니다.</p>
+      <p class="lead">보기, 손모양 익히기, 따라 하기, 확인하기, 완료 순서로 천천히 연습합니다.</p>
     </section>
     ${renderLessonStepper(lesson.id, lessonStageLabel(stage))}
     ${stageMarkup}
