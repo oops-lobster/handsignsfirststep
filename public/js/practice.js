@@ -1,5 +1,5 @@
 import { createHandLandmarker } from "/src/mediapipe/createHandLandmarker.js?v=20260703-practice-meta";
-import { evaluatePracticeFrame } from "/src/mediapipe/feedbackEngine.js?v=20260703-practice-meta";
+import { evaluatePracticeFrame } from "/src/mediapipe/feedbackEngine.js?v=20260703-dictionary-rubric";
 
 function html(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -60,7 +60,7 @@ function metaLabel(value, goodText, okText, waitText = "대기 중") {
 function renderEvaluationMeta(meta) {
   const detectedText = meta.detected ? `${meta.handCount}개 손 감지` : "손을 기다리는 중";
   const guideText = meta.referenceMode === "dictionary-video-reference"
-    ? "국립수어사전 기준 영상을 보며 손 모양과 방향을 맞춰보는 연습입니다. 앱은 공식 채점 대신 화면 상태와 기본 손 상태를 안내합니다."
+    ? "국립수어사전 설명에서 읽은 손가락 조건과 현재 손 모양을 비교합니다. 전문가 검수 전이므로 학습 보조 기준으로만 사용해 주세요."
     : "현재 피드백은 공식 채점이 아니라 카메라 안에서 손이 잘 보이는지 확인하는 연습 안내입니다.";
   const items = [
     ["손 감지", detectedText],
@@ -88,6 +88,7 @@ export async function renderPractice(app, id, repo) {
   ]);
   const entry = dictionary.entries?.[0];
   const hasDictionaryReference = Boolean(entry?.videoUrl);
+  const dictionaryDescription = entry?.description || "";
   const progress = repo.getProgress();
 
   app.innerHTML = `
@@ -132,7 +133,7 @@ export async function renderPractice(app, id, repo) {
           <button id="startCamera">카메라 시작</button>
           <button id="toggleLandmarks" class="secondary">${progress.settings.showLandmarks ? "손 위치 점 끄기" : "손 위치 점 켜기"}</button>
           <button id="resetPractice" class="secondary">다시 연습</button>
-          <button id="completePractice" class="ghost">연습 완료 저장</button>
+          <button id="completePractice" class="ghost" disabled>채점 후 저장</button>
         </div>
         <div id="cameraStatus" class="notice">카메라를 시작하기 전입니다.</div>
         <div id="evaluationMeta">${renderEvaluationMeta({ detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0, referenceMode: hasDictionaryReference ? "dictionary-video-reference" : "general-camera-check" })}</div>
@@ -144,11 +145,11 @@ export async function renderPractice(app, id, repo) {
       <div>
         <p class="eyebrow">Next</p>
         <h2>따라 했다면 짧게 확인해볼까요?</h2>
-        <p class="lead">기준 영상을 다시 보고, 학습 화면의 확인하기 문항으로 이어갈 수 있어요.</p>
+        <p class="lead">사전 설명의 손가락 조건과 맞으면 확인하기 문항으로 이어갈 수 있어요.</p>
       </div>
       <div class="actions">
         <a class="button secondary" href="/learn/fingerspelling/${html(lesson.id)}">학습 화면으로 돌아가기</a>
-        <a class="button" href="/learn/fingerspelling/${html(lesson.id)}#quiz">확인하기로 이동</a>
+        <a id="quizLink" class="button" href="/learn/fingerspelling/${html(lesson.id)}#quiz" aria-disabled="true" tabindex="-1">확인하기 잠김</a>
       </div>
     </section>
   `;
@@ -160,6 +161,7 @@ export async function renderPractice(app, id, repo) {
   const feedbackList = document.querySelector("#feedbackList");
   const evaluationMeta = document.querySelector("#evaluationMeta");
   const completeButton = document.querySelector("#completePractice");
+  const quizLink = document.querySelector("#quizLink");
   let landmarker = null;
   let stream = null;
   let running = false;
@@ -170,7 +172,19 @@ export async function renderPractice(app, id, repo) {
   let pendingFeedbackCount = 0;
   let stableFeedback = [];
   let stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0, referenceMode: hasDictionaryReference ? "dictionary-video-reference" : "general-camera-check" };
+  let practiceUnlocked = false;
   const history = [];
+
+  function unlockPractice() {
+    if (practiceUnlocked) return;
+    practiceUnlocked = true;
+    quizLink.removeAttribute("aria-disabled");
+    quizLink.removeAttribute("tabindex");
+    quizLink.textContent = "확인하기로 이동";
+    completeButton.disabled = false;
+    completeButton.textContent = "연습 완료 저장";
+    status.textContent = "훌륭해요! 사전 설명과 맞아서 확인하기로 넘어갈 수 있어요.";
+  }
 
   function resizeCanvas() {
     canvas.width = video.clientWidth || 640;
@@ -197,7 +211,7 @@ export async function renderPractice(app, id, repo) {
         } else {
           canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         }
-        const { feedback, meta } = evaluatePracticeFrame({ hands, history, referenceAvailable: hasDictionaryReference });
+        const { feedback, meta } = evaluatePracticeFrame({ hands, history, referenceAvailable: hasDictionaryReference, dictionaryDescription });
         const feedbackKey = feedback.map(item => item.state).join("|");
         if (feedbackKey === stableFeedbackKey) {
           stableFeedback = feedback;
@@ -213,9 +227,10 @@ export async function renderPractice(app, id, repo) {
           pendingFeedbackKey = feedbackKey;
           pendingFeedbackCount = 1;
         }
-        feedbackList.innerHTML = stableFeedback.map(item => `<div class="feedbackItem">${html(item.text)}</div>`).join("");
+        if (stableMeta.practicePassed) unlockPractice();
+        feedbackList.innerHTML = stableFeedback.map(item => `<div class="feedbackItem ${item.state === "success" ? "success" : ""}">${html(item.text)}</div>`).join("");
         evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
-        status.textContent = hands.length ? `${hands.length}개 손이 감지되고 있어요.` : "손이 아직 보이지 않아요.";
+        if (!practiceUnlocked) status.textContent = hands.length ? `${hands.length}개 손이 감지되고 있어요.` : "손이 아직 보이지 않아요.";
       } finally {
         inferenceRunning = false;
       }
@@ -300,8 +315,12 @@ export async function renderPractice(app, id, repo) {
     feedbackList.innerHTML = "";
     evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
     status.textContent = running ? "다시 천천히 손을 보여주세요." : "카메라를 시작하기 전입니다.";
-    completeButton.disabled = false;
-    completeButton.textContent = "연습 완료 저장";
+    practiceUnlocked = false;
+    quizLink.setAttribute("aria-disabled", "true");
+    quizLink.setAttribute("tabindex", "-1");
+    quizLink.textContent = "확인하기 잠김";
+    completeButton.disabled = true;
+    completeButton.textContent = "채점 후 저장";
   });
 
   completeButton.addEventListener("click", () => {
@@ -310,6 +329,13 @@ export async function renderPractice(app, id, repo) {
     feedbackList.innerHTML = `<div class="feedbackItem success">천천히 반복하면 자연스럽게 익숙해질 거예요.</div>`;
     completeButton.disabled = true;
     completeButton.textContent = "저장 완료";
+  });
+
+  quizLink.addEventListener("click", event => {
+    if (quizLink.getAttribute("aria-disabled") === "true") {
+      event.preventDefault();
+      status.textContent = "사전 설명과 손모양이 맞으면 확인하기가 열려요.";
+    }
   });
 
   window.addEventListener("pagehide", () => {

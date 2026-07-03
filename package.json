@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node server.js",
     "start": "NODE_ENV=production node server.js",
-    "lint": "node --check server.js && node --check public/js/app.js && node --check public/js/practice.js && node --check src/sign-dictionary/adapter.js && node --check src/mediapipe/landmarkUtils.js && node --check src/mediapipe/feedbackEngine.js",
+    "lint": "node --check server.js && node --check public/js/app.js && node --check public/js/practice.js && node --check src/sign-dictionary/adapter.js && node --check src/mediapipe/landmarkUtils.js && node --check src/mediapipe/dictionaryRubric.js && node --check src/mediapipe/feedbackEngine.js",
     "typecheck": "npm run lint",
     "test": "node --test",
     "build": "npm run lint && npm test"
