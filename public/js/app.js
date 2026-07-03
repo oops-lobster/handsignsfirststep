@@ -205,12 +205,13 @@ async function home() {
   app.innerHTML = `
     <section class="hero rumiHero">
       <div class="heroMascot">
-        ${rumiMascot("idle", "lg", true)}
+        ${rumiMascot("happy", "lg", true)}
       </div>
       <div class="speechBubble heroBubble">
         <p class="eyebrow">루미와 함께</p>
         <h1>루미와 함께 손말 첫걸음을 시작해요</h1>
         <p class="lead">오늘은 어떤 손말을 배워볼까요? 국립수어사전 영상을 보고, 내 손을 카메라로 확인하며 천천히 연습해요.</p>
+        <p class="rumiNameNote"><strong>루미</strong>는 손말을 배울 때 길을 밝혀주는 작은 빛이에요. 수어를 처음 만나는 순간이 조금 더 따뜻해지도록 옆에서 같이 걸어갑니다.</p>
         <div class="actions">
           <a class="palmButton" href="${next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling"}">오늘의 첫걸음 시작</a>
           <a class="palmButton palmButton--soft" href="/learn/fingerspelling">지문자 연습하기</a>
@@ -223,7 +224,7 @@ async function home() {
       </div>
     </section>
     ${rumiSpeechBubble({
-      emotion: completed ? "cheer" : "thinking",
+      emotion: completed ? "cheer" : "happy",
       eyebrow: "오늘의 루미 피드백",
       message: completed ? "와! 오늘도 손말 빛을 모았어요. 다음 지문자도 같이 가볼까요?" : "오늘도 한 걸음 같이 가볼까요? 먼저 영상을 보고 손모양을 천천히 따라 해요.",
       actionLabel: "이어서 가기",
@@ -255,7 +256,7 @@ async function listLessons() {
   const { progress, completed, total, percent } = progressSummary(lessons);
   app.innerHTML = `
     <section class="hero compactHero">
-      ${rumiMascot("confident", "md", true)}
+      ${rumiMascot("happy", "md", true)}
       <div class="speechBubble heroBubble">
         <p class="eyebrow">지문자 배우기</p>
         <h1>손바닥을 눌러 오늘의 손말을 골라요</h1>

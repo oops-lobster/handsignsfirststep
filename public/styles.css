@@ -154,21 +154,20 @@ button:active:not(:disabled), .button:active, .palmButton:active, .mapNode:activ
 .brandMark {
   width: 68px;
   height: 68px;
-  border-radius: 26px 26px 26px 14px;
+  border-radius: 24px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 56%, #fff7cb 0 44%, #ffe9d9 45% 100%);
+  background: #fffdf4;
   border: 3px solid rgba(106, 67, 31, 0.16);
   box-shadow: 0 8px 0 rgba(91, 58, 30, 0.1), 0 15px 24px rgba(91, 58, 30, 0.14);
 }
 .brandMark img {
-  width: 92px;
-  height: 92px;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   object-position: center;
-  transform: translateY(-8px) scale(1.04);
-  filter: drop-shadow(0 2px 0 rgba(106, 67, 31, 0.1));
+  transform: scale(1.1);
 }
 .brand strong { font-size: 1.12rem; letter-spacing: -0.025em; }
 .brand small { display: block; color: var(--muted); margin-top: 0.1rem; font-weight: 760; }
@@ -240,6 +239,17 @@ main {
   overflow-wrap: break-word;
 }
 .actions { display: flex; gap: 0.72rem; flex-wrap: wrap; margin-top: 1.2rem; }
+.rumiNameNote {
+  margin: 1rem 0 0;
+  padding: 0.92rem 1rem;
+  border-radius: 24px 24px 24px 10px;
+  background: linear-gradient(135deg, rgba(255, 217, 74, 0.28), rgba(168, 232, 195, 0.22));
+  color: var(--text);
+  font-size: clamp(0.98rem, 1.35vw, 1.08rem);
+  font-weight: 760;
+  line-height: 1.62;
+}
+.rumiNameNote strong { color: var(--rumi-brown); font-weight: 950; }
 .notice {
   background: var(--secondary-soft);
   border-radius: 24px 24px 24px 10px;
