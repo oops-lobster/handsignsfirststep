@@ -201,7 +201,7 @@ function aboutPage() {
       <div class="grid">
         <article class="card"><strong>카메라 개인정보</strong><p>카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p></article>
         <article class="card"><strong>출처</strong><p>수어 영상은 국립국어원 한국수어사전 자료를 API로 연결해 표시합니다.</p></article>
-        <article class="card"><strong>검수 필요</strong><p>세부 손 모양 설명과 기준 landmark는 농인 당사자 및 한국수어 전문가 검수가 필요합니다.</p></article>
+        <article class="card"><strong>검수 필요</strong><p>세부 손 모양 설명과 기준 손 위치 데이터는 농인 당사자 및 한국수어 전문가 검수가 필요합니다.</p></article>
       </div>
     </section>
   `;
@@ -212,7 +212,7 @@ function devReferenceCapture() {
     <section class="panel">
       <p class="eyebrow">Development only</p>
       <h1>Reference Capture</h1>
-      <p class="lead">이 페이지는 개발 환경에서 normalized landmark sample 형식을 확인하기 위한 자리입니다. production에서는 일반 사용자에게 노출하지 않는 것을 전제로 합니다.</p>
+      <p class="lead">이 페이지는 개발 환경에서 기준 손 위치 데이터 형식을 확인하기 위한 자리입니다. production에서는 일반 사용자에게 노출하지 않는 것을 전제로 합니다.</p>
       <a class="button" href="/practice/fingerspelling/giyeok">카메라 연습 화면에서 수집 흐름 확인</a>
     </section>
   `;

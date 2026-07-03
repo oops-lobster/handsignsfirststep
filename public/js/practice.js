@@ -53,11 +53,11 @@ export async function renderPractice(app, id, repo) {
         <h2>내 손 확인</h2>
         <div class="cameraBox" data-mirror="${progress.settings.mirrorCamera}">
           <video id="cameraVideo" autoplay muted playsinline></video>
-          <canvas id="landmarkCanvas" aria-label="감지된 손 랜드마크 표시"></canvas>
+          <canvas id="landmarkCanvas" aria-label="카메라가 감지한 손 위치 점 표시"></canvas>
         </div>
         <div class="actions">
           <button id="startCamera">카메라 시작</button>
-          <button id="toggleLandmarks" class="secondary">${progress.settings.showLandmarks ? "랜드마크 끄기" : "랜드마크 켜기"}</button>
+          <button id="toggleLandmarks" class="secondary">${progress.settings.showLandmarks ? "손 위치 점 끄기" : "손 위치 점 켜기"}</button>
           <button id="completePractice" class="ghost">학습 완료</button>
         </div>
         <div id="cameraStatus" class="notice">카메라를 시작하기 전입니다.</div>
@@ -139,7 +139,7 @@ export async function renderPractice(app, id, repo) {
   document.querySelector("#toggleLandmarks").addEventListener("click", event => {
     const current = repo.getProgress().settings.showLandmarks;
     repo.updateSettings({ showLandmarks: !current });
-    event.currentTarget.textContent = !current ? "랜드마크 끄기" : "랜드마크 켜기";
+    event.currentTarget.textContent = !current ? "손 위치 점 끄기" : "손 위치 점 켜기";
     if (current) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
   });
 
