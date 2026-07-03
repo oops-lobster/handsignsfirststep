@@ -152,23 +152,25 @@ button:active:not(:disabled), .button:active, .palmButton:active, .mapNode:activ
   text-decoration: none;
 }
 .brandMark {
-  width: 58px;
-  height: 58px;
-  border-radius: 23px 23px 23px 12px;
+  width: 68px;
+  height: 68px;
+  border-radius: 26px 26px 26px 14px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: linear-gradient(180deg, #fff8d1, #ffe2d7);
-  border: 2px solid rgba(106, 67, 31, 0.12);
-  box-shadow: 0 8px 18px rgba(91, 58, 30, 0.14);
+  background: radial-gradient(circle at 50% 56%, #fff7cb 0 44%, #ffe9d9 45% 100%);
+  border: 3px solid rgba(106, 67, 31, 0.16);
+  box-shadow: 0 8px 0 rgba(91, 58, 30, 0.1), 0 15px 24px rgba(91, 58, 30, 0.14);
 }
 .brandMark img {
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
-  object-position: center 25%;
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  object-position: center;
+  transform: translateY(-8px) scale(1.04);
+  filter: drop-shadow(0 2px 0 rgba(106, 67, 31, 0.1));
 }
-.brand strong { font-size: 1.08rem; letter-spacing: -0.02em; }
+.brand strong { font-size: 1.12rem; letter-spacing: -0.025em; }
 .brand small { display: block; color: var(--muted); margin-top: 0.1rem; font-weight: 760; }
 main {
   max-width: 1180px;

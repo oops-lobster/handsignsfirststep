@@ -22,14 +22,14 @@ function html(value) {
 }
 
 const rumiImages = {
-  idle: "/assets/rumi/rumi_idle.png",
-  happy: "/assets/rumi/rumi_happy.png",
-  cheer: "/assets/rumi/rumi_cheer.png",
-  sad: "/assets/rumi/rumi_sad.png",
-  surprised: "/assets/rumi/rumi_surprised.png",
-  thinking: "/assets/rumi/rumi_thinking.png",
-  encourage: "/assets/rumi/rumi_encourage.png",
-  confident: "/assets/rumi/rumi_confident.png"
+  idle: "/assets/rumi/transparent/rumi_idle.png",
+  happy: "/assets/rumi/transparent/rumi_happy.png",
+  cheer: "/assets/rumi/transparent/rumi_cheer.png",
+  sad: "/assets/rumi/transparent/rumi_sad.png",
+  surprised: "/assets/rumi/transparent/rumi_surprised.png",
+  thinking: "/assets/rumi/transparent/rumi_thinking.png",
+  encourage: "/assets/rumi/transparent/rumi_encourage.png",
+  confident: "/assets/rumi/transparent/rumi_confident.png"
 };
 
 function rumiMascot(emotion = "idle", size = "md", withGlow = false) {

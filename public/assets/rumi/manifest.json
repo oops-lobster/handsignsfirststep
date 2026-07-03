@@ -1,0 +1,43 @@
+{
+  "transparent": {
+    "idle": "transparent/rumi_idle.png",
+    "happy": "transparent/rumi_happy.png",
+    "cheer": "transparent/rumi_cheer.png",
+    "sad": "transparent/rumi_sad.png",
+    "surprised": "transparent/rumi_surprised.png",
+    "thinking": "transparent/rumi_thinking.png",
+    "encourage": "transparent/rumi_encourage.png",
+    "confident": "transparent/rumi_confident.png"
+  },
+  "logo": {
+    "face": {
+      "1024": "logo/rumi_logo_face_1024.png",
+      "512": "logo/rumi_logo_face_512.png",
+      "256": "logo/rumi_logo_face_256.png",
+      "192": "logo/rumi_logo_face_192.png",
+      "128": "logo/rumi_logo_face_128.png",
+      "64": "logo/rumi_logo_face_64.png",
+      "32": "logo/rumi_logo_face_32.png"
+    },
+    "face_clean": {
+      "1024": "logo/rumi_logo_face_clean_1024.png",
+      "512": "logo/rumi_logo_face_clean_512.png",
+      "256": "logo/rumi_logo_face_clean_256.png",
+      "192": "logo/rumi_logo_face_clean_192.png",
+      "128": "logo/rumi_logo_face_clean_128.png",
+      "64": "logo/rumi_logo_face_clean_64.png",
+      "32": "logo/rumi_logo_face_clean_32.png"
+    }
+  },
+  "recommended_public_path": "public/assets/rumi/",
+  "emotion_mapping": {
+    "idle": "기본/대기",
+    "happy": "기쁨/정답",
+    "cheer": "환호/미션 성공",
+    "sad": "슬픔/재시도",
+    "surprised": "놀람/새 콘텐츠 해금",
+    "thinking": "고민/힌트",
+    "encourage": "응원/다시 시도",
+    "confident": "자신감/다음 단계"
+  }
+}
