@@ -75,6 +75,20 @@ function renderLessonStepper(lessonId, currentStep) {
   `;
 }
 
+function lessonStageFromHash() {
+  const stage = window.location.hash.slice(1);
+  return ["watch", "understand", "quiz", "complete"].includes(stage) ? stage : "watch";
+}
+
+function lessonStageLabel(stage) {
+  return {
+    watch: "보기",
+    understand: "이해하기",
+    quiz: "확인하기",
+    complete: "완료"
+  }[stage] || "보기";
+}
+
 function lessonCard(lesson, completedIds = []) {
   const done = completedIds.includes(lesson.id);
   return `
@@ -146,54 +160,94 @@ async function lessonPage(id) {
   const quiz = buildQuiz(lesson.id).map((item, index) => index === 0
     ? { ...item, imageUrl: entry?.thumbnailUrl || "", prompt: "이 사진이 나타내는 지문자는 무엇일까요?" }
     : item);
-  app.innerHTML = `
-    <section class="sectionTitle">
-      <span>${categoryLabel(lesson.category)} · ${lesson.reviewStatus === "expert-reviewed" ? "전문가 검수 완료" : "전문가 검수 전"}</span>
-      <h1><span class="symbol">${html(lesson.symbol)}</span> 지문자 배우기</h1>
-      <p class="lead">보기, 이해하기, 따라 하기, 확인하기, 완료 순서로 천천히 연습합니다.</p>
-    </section>
-    ${renderLessonStepper(lesson.id, "보기")}
-    <section class="layoutTwo">
-      <div id="watch" class="learningStage">
+  const stage = lessonStageFromHash();
+  const progress = repo.getProgress();
+  const isCompleted = progress.completedLessonIds.includes(lesson.id);
+  let stageMarkup = "";
+
+  if (stage === "watch") {
+    stageMarkup = `
+      <section id="watch" class="learningStage singleStage">
         <p class="eyebrow">보기</p>
         ${renderVideo(entry)}
         <div class="stageNav">
-          <a class="button secondary" href="#understand">다음: 이해하기</a>
+          <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#understand">다음: 이해하기</a>
         </div>
-      </div>
-      <div id="understand" class="panel learningStage">
+      </section>
+    `;
+  }
+
+  if (stage === "understand") {
+    stageMarkup = `
+      <section id="understand" class="panel learningStage singleStage">
         <p class="eyebrow">이해하기</p>
         <h2>현재는 사전 영상을 중심으로 학습할 수 있어요.</h2>
         <ul class="tips">
           ${lesson.learningTips.map(tip => `<li>${html(tip)}</li>`).join("")}
           ${lesson.commonMistakes.map(item => `<li>${html(item)}</li>`).join("")}
         </ul>
-        <div class="actions">
+        <div class="stageNav">
+          <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#watch">이전: 보기</a>
           <a class="button" href="/practice/fingerspelling/${lesson.id}">다음: 따라 하기</a>
         </div>
-      </div>
+      </section>
+    `;
+  }
+
+  if (stage === "quiz") {
+    stageMarkup = `
+      <section id="quiz" class="panel learningStage singleStage">
+        <p class="eyebrow">확인하기</p>
+        <h2>오늘 배운 지문자를 골라보세요.</h2>
+        <div class="quizStack">
+          ${quiz.map(renderQuizCard).join("")}
+        </div>
+        <div class="stageNav">
+          <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">이전: 따라 하기</a>
+          <button id="completeLesson">완료 저장</button>
+        </div>
+      </section>
+    `;
+  }
+
+  if (stage === "complete") {
+    stageMarkup = isCompleted
+      ? `
+        <section id="complete" class="panel learningStage singleStage">
+          <p class="eyebrow">완료</p>
+          <h2>${html(lesson.symbol)} 지문자를 마쳤어요.</h2>
+          <p class="lead">손말과 조금 더 가까워졌어요. 천천히 반복하면 자연스럽게 익숙해질 거예요.</p>
+          <div class="actions">
+            <a class="button" href="/learn/fingerspelling">과정 목록</a>
+            <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">다시 연습하기</a>
+          </div>
+        </section>
+      `
+      : `
+        <section id="complete" class="panel learningStage singleStage">
+          <p class="eyebrow">완료</p>
+          <h2>아직 완료 전이에요.</h2>
+          <p class="lead">확인하기를 마치고 완료 저장을 누르면 진도에 기록됩니다.</p>
+          <div class="actions">
+            <a class="button" href="/learn/fingerspelling/${lesson.id}#quiz">확인하기로 이동</a>
+          </div>
+        </section>
+      `;
+  }
+
+  app.innerHTML = `
+    <section class="sectionTitle">
+      <span>${categoryLabel(lesson.category)} · ${lesson.reviewStatus === "expert-reviewed" ? "전문가 검수 완료" : "전문가 검수 전"}</span>
+      <h1><span class="symbol">${html(lesson.symbol)}</span> 지문자 배우기</h1>
+      <p class="lead">보기, 이해하기, 따라 하기, 확인하기, 완료 순서로 천천히 연습합니다.</p>
     </section>
-    <section id="quiz" class="panel learningStage">
-      <p class="eyebrow">확인하기</p>
-      <h2>오늘 배운 지문자를 골라보세요.</h2>
-      <div class="quizStack">
-        ${quiz.map(renderQuizCard).join("")}
-      </div>
-      <div class="stageNav">
-        <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">이전: 따라 하기</a>
-        <button id="completeLesson">완료 저장</button>
-      </div>
-    </section>
-    <section id="complete" class="panel learningStage">
-      <p class="eyebrow">완료</p>
-      <h2>아직 완료 전이에요.</h2>
-      <p class="lead">확인하기를 마치고 완료 저장을 누르면 진도에 기록됩니다.</p>
-    </section>
+    ${renderLessonStepper(lesson.id, lessonStageLabel(stage))}
+    ${stageMarkup}
   `;
   document.querySelector("#completeLesson")?.addEventListener("click", () => {
     repo.completeLesson(lesson.id);
-    renderCompletion(lesson);
-    window.location.hash = "complete";
+    if (window.location.hash === "#complete") lessonPage(lesson.id);
+    else window.location.hash = "complete";
   });
   document.querySelectorAll(".quizChoice").forEach(button => {
     button.addEventListener("click", () => {
@@ -212,30 +266,6 @@ async function lessonPage(id) {
         document.querySelector("#completeLesson")?.focus();
       }
     });
-  });
-  scrollToHash();
-}
-
-function renderCompletion(lesson) {
-  const existing = document.querySelector("#complete");
-  const markup = `
-      <p class="eyebrow">완료</p>
-      <h2>${html(lesson.symbol)} 지문자를 마쳤어요.</h2>
-      <p class="lead">손말과 조금 더 가까워졌어요. 천천히 반복하면 자연스럽게 익숙해질 거예요.</p>
-      <div class="actions">
-        <a class="button" href="/learn/fingerspelling">과정 목록</a>
-        <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">다시 연습하기</a>
-      </div>
-  `;
-  if (existing) existing.innerHTML = markup;
-  else app.insertAdjacentHTML("beforeend", `<section id="complete" class="panel learningStage">${markup}</section>`);
-}
-
-function scrollToHash() {
-  const hash = window.location.hash.slice(1);
-  if (!hash) return;
-  window.requestAnimationFrame(() => {
-    document.getElementById(hash)?.scrollIntoView({ block: "start" });
   });
 }
 
@@ -315,5 +345,9 @@ async function render() {
     app.innerHTML = `<section class="panel danger"><h1>페이지를 불러오지 못했어요.</h1><p>${html(error.message)}</p></section>`;
   }
 }
+
+window.addEventListener("hashchange", () => {
+  render();
+});
 
 render();
