@@ -1,0 +1,21 @@
+{
+  "name": "handsignsfirststep",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Handsigns First Step is a Korean fingerspelling learning MVP using dictionary videos and on-device hand practice feedback.",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "NODE_ENV=production node server.js",
+    "lint": "node --check server.js && node --check public/js/app.js && node --check public/js/practice.js && node --check src/sign-dictionary/adapter.js && node --check src/mediapipe/landmarkUtils.js && node --check src/mediapipe/feedbackEngine.js",
+    "typecheck": "npm run lint",
+    "test": "node --test",
+    "build": "npm run lint && npm test"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.22"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
