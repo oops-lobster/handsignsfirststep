@@ -107,7 +107,10 @@ export async function renderPractice(app, id, repo) {
       loop();
     } catch (error) {
       status.textContent = `카메라 또는 모델을 시작하지 못했습니다. ${error.message}`;
-      feedbackList.innerHTML = `<div class="feedbackItem">모델 파일은 /models/hand_landmarker.task 경로에 배치해야 합니다.</div>`;
+      const message = error.message.includes("MediaPipe")
+        ? "MediaPipe 모듈을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+        : "모델 파일은 /models/hand_landmarker.task 경로에 배치해야 합니다.";
+      feedbackList.innerHTML = `<div class="feedbackItem">${html(message)}</div>`;
     }
   });
 
