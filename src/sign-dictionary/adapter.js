@@ -249,6 +249,10 @@ function requestWithHostIp(url, options, timeoutMs) {
       timeout: timeoutMs,
       lookup(hostname, requestOptions, callback) {
         if (hostname === "api.kcisa.kr") {
+          if (requestOptions?.all) {
+            callback(null, [{ address: apiHostFallbackIp, family: 4 }]);
+            return;
+          }
           callback(null, apiHostFallbackIp, 4);
           return;
         }
