@@ -19,8 +19,8 @@ test("progress stores completed lessons", () => {
 
 test("progress stores practice pass before quiz", () => {
   const repo = new LearningProgressRepository(memoryStorage());
-  repo.markPracticePassed("giyeok");
-  assert.deepEqual(repo.getProgress().practicePassedLessonIds, ["giyeok"]);
+  repo.markDictionaryPracticePassed("giyeok");
+  assert.deepEqual(repo.getProgress().dictionaryPracticePassedLessonIds, ["giyeok"]);
 });
 
 test("progress resets invalid schema", () => {

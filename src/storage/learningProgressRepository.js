@@ -3,6 +3,7 @@ export const defaultProgress = {
   completedLessonIds: [],
   quizCompletedLessonIds: [],
   practicePassedLessonIds: [],
+  dictionaryPracticePassedLessonIds: [],
   lastLessonId: "",
   reviewLessonIds: [],
   recentLessonIds: [],
@@ -54,6 +55,13 @@ export class LearningProgressRepository {
   markPracticePassed(lessonId) {
     const progress = this.getProgress();
     if (!progress.practicePassedLessonIds.includes(lessonId)) progress.practicePassedLessonIds.push(lessonId);
+    this.saveLastLesson(lessonId, progress);
+    return this.save(progress);
+  }
+
+  markDictionaryPracticePassed(lessonId) {
+    const progress = this.getProgress();
+    if (!progress.dictionaryPracticePassedLessonIds.includes(lessonId)) progress.dictionaryPracticePassedLessonIds.push(lessonId);
     this.saveLastLesson(lessonId, progress);
     return this.save(progress);
   }

@@ -99,6 +99,8 @@ video { width: 100%; border-radius: 22px; background: #222; }
   font-weight: 850;
   letter-spacing: -0.01em;
 }
+.cameraBox[data-camera-state="loading"]::before { content: "카메라 불러오는 중"; }
+.cameraBox[data-camera-state="running"]::before { display: none; }
 .cameraBox video, .cameraBox canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .cameraBox video { z-index: 1; }
 .cameraBox canvas { z-index: 2; pointer-events: none; }

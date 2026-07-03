@@ -128,7 +128,7 @@ export async function renderPractice(app, id, repo) {
       </article>
       <article class="videoCard">
         <h2>내 손 확인</h2>
-        <div class="cameraBox" data-mirror="${progress.settings.mirrorCamera}">
+        <div class="cameraBox" data-mirror="${progress.settings.mirrorCamera}" data-camera-state="idle">
           <video id="cameraVideo" autoplay muted playsinline></video>
           <canvas id="landmarkCanvas" aria-label="카메라가 감지한 손 위치 점 표시"></canvas>
           <div id="countdownOverlay" class="countdownOverlay" hidden></div>
@@ -160,6 +160,7 @@ export async function renderPractice(app, id, repo) {
 
   const video = document.querySelector("#cameraVideo");
   const canvas = document.querySelector("#landmarkCanvas");
+  const cameraBox = document.querySelector(".cameraBox");
   const countdownOverlay = document.querySelector("#countdownOverlay");
   const status = document.querySelector("#cameraStatus");
   const feedbackList = document.querySelector("#feedbackList");
@@ -182,7 +183,7 @@ export async function renderPractice(app, id, repo) {
   function unlockPractice() {
     if (practiceUnlocked) return;
     practiceUnlocked = true;
-    repo.markPracticePassed(lesson.id);
+    repo.markDictionaryPracticePassed(lesson.id);
     quizLinks.forEach(link => {
       link.removeAttribute("aria-disabled");
       link.removeAttribute("tabindex");
@@ -274,6 +275,7 @@ export async function renderPractice(app, id, repo) {
         throw new Error("이 브라우저에서는 카메라 입력을 사용할 수 없습니다. Safari/Chrome 최신 버전에서 다시 열어주세요.");
       }
       status.textContent = "모델을 불러오는 중입니다.";
+      cameraBox.dataset.cameraState = "loading";
       landmarker ||= await createHandLandmarker({ runningMode: "VIDEO" });
       status.textContent = "카메라 권한을 요청합니다.";
       stream = await navigator.mediaDevices.getUserMedia({
@@ -286,6 +288,7 @@ export async function renderPractice(app, id, repo) {
       });
       video.srcObject = stream;
       await video.play();
+      cameraBox.dataset.cameraState = "running";
       status.textContent = "3초 뒤 연습을 시작합니다.";
       await showCountdown();
       running = true;
@@ -301,6 +304,7 @@ export async function renderPractice(app, id, repo) {
         message = error.message;
       }
       status.textContent = message;
+      cameraBox.dataset.cameraState = "idle";
       feedbackList.innerHTML = `<div class="feedbackItem">${html(message)}</div>`;
     }
   });
@@ -322,6 +326,7 @@ export async function renderPractice(app, id, repo) {
     feedbackList.innerHTML = "";
     evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
     status.textContent = running ? "다시 천천히 손을 보여주세요." : "카메라를 시작하기 전입니다.";
+    if (!running) cameraBox.dataset.cameraState = "idle";
     practiceUnlocked = false;
     quizLinks.forEach(link => {
       link.setAttribute("aria-disabled", "true");

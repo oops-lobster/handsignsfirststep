@@ -165,7 +165,7 @@ async function lessonPage(id) {
   const stage = lessonStageFromHash();
   const progress = repo.getProgress();
   const isCompleted = progress.completedLessonIds.includes(lesson.id);
-  const practicePassed = progress.practicePassedLessonIds.includes(lesson.id);
+  const practicePassed = progress.dictionaryPracticePassedLessonIds.includes(lesson.id);
   let stageMarkup = "";
 
   if (stage === "watch") {
@@ -339,7 +339,7 @@ function practiceRoute(id) {
       <div class="notice">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</div>
     </section>
   `;
-  import("/js/practice.js?v=20260703-practice-meta")
+  import("/js/practice.js?v=20260703-dictionary-gate")
     .then(module => module.renderPractice(app, id, repo))
     .catch(error => {
       app.innerHTML = `<section class="panel danger"><h1>연습 화면을 불러오지 못했어요.</h1><p>${html(error.message)}</p></section>`;
