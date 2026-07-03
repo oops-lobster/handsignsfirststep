@@ -5,6 +5,32 @@ function html(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
+const rumiImages = {
+  idle: "/assets/rumi/rumi_idle.png",
+  happy: "/assets/rumi/rumi_happy.png",
+  cheer: "/assets/rumi/rumi_cheer.png",
+  sad: "/assets/rumi/rumi_sad.png",
+  thinking: "/assets/rumi/rumi_thinking.png",
+  encourage: "/assets/rumi/rumi_encourage.png"
+};
+
+function rumiMascot(emotion = "idle", size = "sm", withGlow = false) {
+  const src = rumiImages[emotion] || rumiImages.idle;
+  return `<img class="rumiMascot rumiMascot--${html(size)}${withGlow ? " withGlow" : ""}" src="${html(src)}" alt="손말 요정 루미">`;
+}
+
+function rumiSpeechBubble({ emotion = "idle", eyebrow = "루미의 안내", message }) {
+  return `
+    <div class="rumiTalk">
+      ${rumiMascot(emotion, "sm", true)}
+      <div class="speechBubble">
+        <p class="eyebrow">${html(eyebrow)}</p>
+        <p>${html(message)}</p>
+      </div>
+    </div>
+  `;
+}
+
 async function api(path) {
   const response = await fetch(path);
   const data = await response.json();
@@ -96,10 +122,13 @@ export async function renderPractice(app, id, repo) {
   const progress = repo.getProgress();
 
   app.innerHTML = `
-    <section class="sectionTitle">
-      <span>Practice</span>
-      <h1>${html(lesson.symbol)} 따라 하기</h1>
-      <p class="lead">기준 영상을 보며 천천히 따라 해보세요. 카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p>
+    <section class="hero compactHero">
+      ${rumiMascot("encourage", "md", true)}
+      <div class="speechBubble heroBubble">
+        <p class="eyebrow">따라 하기</p>
+        <h1>${html(lesson.symbol)} 손말을 루미와 같이 해봐요</h1>
+        <p class="lead">기준 영상을 보고 손모양을 3초 동안 유지하면 확인하기가 열립니다. 카메라 영상은 기기 안에서만 분석돼요.</p>
+      </div>
     </section>
     <nav class="stepper" aria-label="학습 단계">
       <a href="/learn/fingerspelling/${html(lesson.id)}#watch">보기</a>
@@ -111,6 +140,11 @@ export async function renderPractice(app, id, repo) {
     <section class="cameraGrid">
       <article class="videoCard">
         <h2>기준 영상</h2>
+        ${rumiSpeechBubble({
+          emotion: "thinking",
+          eyebrow: "루미의 관찰 힌트",
+          message: "영상 속 손가락 모양과 손바닥 방향을 먼저 보고, 내 손을 천천히 맞춰봐요."
+        })}
         ${entry?.videoUrl ? `<video class="referenceVideo" src="${html(entry.videoUrl)}" poster="${html(entry.thumbnailUrl || "")}" controls playsinline preload="metadata"></video>` : `<div class="notice danger">사전 영상 연결 확인 중입니다.</div>`}
         <div class="signGuide">
           <strong>사전 영상 기준으로 따라 해요</strong>
@@ -128,6 +162,11 @@ export async function renderPractice(app, id, repo) {
       </article>
       <article class="videoCard">
         <h2>내 손 확인</h2>
+        ${rumiSpeechBubble({
+          emotion: "idle",
+          eyebrow: "루미의 카메라 안내",
+          message: "손 전체가 보이도록 조금 떨어져서 보여주세요. 맞는 모양을 3초 유지하면 루미가 칭찬해요."
+        })}
         <div class="cameraBox" data-mirror="${progress.settings.mirrorCamera}" data-camera-state="idle">
           <video id="cameraVideo" autoplay muted playsinline></video>
           <canvas id="landmarkCanvas" aria-label="카메라가 감지한 손 위치 점 표시"></canvas>
@@ -145,7 +184,7 @@ export async function renderPractice(app, id, repo) {
         <p class="privacyNote">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p>
       </article>
     </section>
-    <section class="panel practiceNext">
+    <section class="stageBubble practiceNext">
       <div>
         <p class="eyebrow">Next</p>
         <h2>따라 했다면 짧게 확인해볼까요?</h2>

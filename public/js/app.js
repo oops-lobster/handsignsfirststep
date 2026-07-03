@@ -21,6 +21,91 @@ function html(value) {
     .replaceAll("'", "&#039;");
 }
 
+const rumiImages = {
+  idle: "/assets/rumi/rumi_idle.png",
+  happy: "/assets/rumi/rumi_happy.png",
+  cheer: "/assets/rumi/rumi_cheer.png",
+  sad: "/assets/rumi/rumi_sad.png",
+  surprised: "/assets/rumi/rumi_surprised.png",
+  thinking: "/assets/rumi/rumi_thinking.png",
+  encourage: "/assets/rumi/rumi_encourage.png",
+  confident: "/assets/rumi/rumi_confident.png"
+};
+
+function rumiMascot(emotion = "idle", size = "md", withGlow = false) {
+  const src = rumiImages[emotion] || rumiImages.idle;
+  return `<img class="rumiMascot rumiMascot--${html(size)}${withGlow ? " withGlow" : ""}" src="${html(src)}" alt="손말 요정 루미">`;
+}
+
+function rumiSpeechBubble({ emotion = "idle", eyebrow = "루미의 안내", message, actionLabel, href }) {
+  return `
+    <div class="rumiTalk">
+      ${rumiMascot(emotion, "sm", true)}
+      <div class="speechBubble">
+        <p class="eyebrow">${html(eyebrow)}</p>
+        <p>${html(message)}</p>
+        ${actionLabel && href ? `<a class="palmButton palmButton--small" href="${html(href)}">${html(actionLabel)}</a>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function bubbleLearningMap(steps) {
+  return `
+    <section class="learningMap" aria-label="루미와 함께 가는 학습 지도">
+      ${steps.map((step, index) => `
+        <a class="mapNode mapNode--${html(step.status)}" href="${html(step.href)}" aria-label="${html(step.title)} ${html(step.statusLabel)}">
+          <span class="nodeIcon" aria-hidden="true">${html(step.icon || "손")}</span>
+          <span class="nodeText">
+            <strong>${html(step.title)}</strong>
+            <small>${html(step.description)}</small>
+          </span>
+          <span class="nodeBadge">${html(step.statusLabel)}</span>
+        </a>
+        ${index < steps.length - 1 ? `<span class="glowPath" aria-hidden="true"></span>` : ""}
+      `).join("")}
+    </section>
+  `;
+}
+
+function handLetterPad(lessons, completedIds = []) {
+  return `
+    <section class="handLetterPad" aria-label="지문자 손바닥 선택">
+      ${lessons.map(lesson => {
+        const done = completedIds.includes(lesson.id);
+        return `
+          <a class="palmTile${done ? " isDone" : ""}" href="/learn/fingerspelling/${html(lesson.id)}" aria-label="${html(lesson.symbol)} 지문자 배우기">
+            <span class="palmStatus">${done ? "빛 획득" : categoryLabel(lesson.category)}</span>
+            <span class="palmSymbol">${html(lesson.symbol)}</span>
+            <strong>${html(lesson.symbol)} 손말</strong>
+          </a>
+        `;
+      }).join("")}
+    </section>
+  `;
+}
+
+function missionPortals() {
+  const missions = [
+    ["학교", "교실에서 쓰는 첫 표현", "school"],
+    ["자기소개", "이름과 인사 표현", "intro"],
+    ["길찾기", "방향을 묻는 표현", "transport"],
+    ["응급상황", "도움이 필요할 때", "emergency"]
+  ];
+  return `
+    <section class="missionPortals" aria-label="상황 미션">
+      ${missions.map(([title, desc, type]) => `
+        <button class="missionPortal" type="button" data-mission="${html(type)}">
+          <span class="portalSticker" aria-hidden="true">✦</span>
+          <strong>${html(title)}</strong>
+          <small>${html(desc)}</small>
+          <span>루미와 들어가기</span>
+        </button>
+      `).join("")}
+    </section>
+  `;
+}
+
 function categoryLabel(category) {
   return category === "vowel" ? "모음" : "자음";
 }
@@ -36,7 +121,7 @@ function renderVideo(entry) {
     return `<div class="notice danger">사전 영상 연결 확인 중입니다. 잘못된 영상을 보여주지 않기 위해 임시로 비워두었습니다.</div>`;
   }
   return `
-    <div class="videoCard">
+    <div class="videoBubble">
       <video src="${html(entry.videoUrl)}" poster="${html(entry.thumbnailUrl || "")}" controls playsinline preload="metadata"></video>
       <p class="meta">${html(entry.attribution || "영상 출처: 국립국어원 한국수어사전")}</p>
       ${entry.sourceUrl ? `<a class="button ghost" href="${html(entry.sourceUrl)}" target="_blank" rel="noreferrer">원본 사전 열기</a>` : ""}
@@ -46,7 +131,7 @@ function renderVideo(entry) {
 
 function renderQuizCard(item, index) {
   return `
-    <article class="quizCard" data-quiz-id="${html(item.id)}">
+    <article class="quizCard speechBubble quizBubble" data-quiz-id="${html(item.id)}">
       <p class="eyebrow">${index === 0 ? "확인" : `문항 ${index + 1}`}</p>
       <h3>${html(item.prompt)}</h3>
       ${item.imageUrl ? `<img class="quizImage" src="${html(item.imageUrl)}" alt="오늘 배운 지문자 기준 이미지">` : ""}
@@ -94,11 +179,14 @@ function lessonStageLabel(stage) {
 function lessonCard(lesson, completedIds = []) {
   const done = completedIds.includes(lesson.id);
   return `
-    <a class="lessonCard" href="/learn/fingerspelling/${lesson.id}">
-      <span class="pill">${categoryLabel(lesson.category)} · ${lesson.curriculumGroup === "starter" ? "입문 과정 시범 구성" : "둘러보기"}</span>
-      <span class="symbol">${html(lesson.symbol)}</span>
-      <strong>${html(lesson.symbol)} 지문자</strong>
-      <span class="meta">${done ? "학습 완료" : "전문가 검수 전"} · 사전 영상 연결 확인</span>
+    <a class="lessonCard mapNode mapNode--${done ? "done" : "current"}" href="/learn/fingerspelling/${lesson.id}">
+      <span class="nodeIcon" aria-hidden="true">${done ? "✓" : "손"}</span>
+      <span class="nodeText">
+        <span class="symbol">${html(lesson.symbol)}</span>
+        <strong>${html(lesson.symbol)} 지문자</strong>
+        <small>${done ? "학습 완료" : `${categoryLabel(lesson.category)} · 사전 영상 보기`}</small>
+      </span>
+      <span class="nodeBadge">${done ? "완료" : "시작"}</span>
     </a>
   `;
 }
@@ -107,31 +195,58 @@ async function home() {
   const { lessons } = await api("/api/lessons");
   const { progress, completed, total, percent } = progressSummary(lessons);
   const next = lessons.find(lesson => !progress.completedLessonIds.includes(lesson.id)) || lessons[0];
+  const starter = lessons.filter(lesson => lesson.curriculumGroup === "starter");
+  const mapSteps = [
+    ["오늘의 지문자", next ? `${next.symbol} 손말 보기` : "첫 지문자 열기", next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling", "current", "현재", "손"],
+    ["손모양 따라하기", "카메라로 손 확인", next ? `/practice/fingerspelling/${next.id}` : "/learn/fingerspelling", "locked", "연습", "빛"],
+    ["확인하기", "사진을 보고 골라보기", next ? `/learn/fingerspelling/${next.id}#quiz` : "/learn/fingerspelling", "locked", "잠김", "?"],
+    ["루미의 칭찬", "오늘의 빛 받기", "/progress", completed ? "reward" : "locked", completed ? "보상" : "잠김", "★"]
+  ].map(([title, description, href, status, statusLabel, icon]) => ({ title, description, href, status, statusLabel, icon }));
   app.innerHTML = `
-    <section class="hero">
-      <div class="panel">
-        <p class="eyebrow">손으로 시작하는 첫 인사</p>
-        <h1>천천히 따라 해도 괜찮아요.</h1>
-        <p class="lead">손말 첫걸음은 한국수어 지문자를 처음 배우는 사용자가 국립수어사전 영상을 보고, 카메라로 손이 잘 보이는지 확인하며 연습하는 입문 학습 MVP입니다.</p>
+    <section class="hero rumiHero">
+      <div class="heroMascot">
+        ${rumiMascot("idle", "lg", true)}
+      </div>
+      <div class="speechBubble heroBubble">
+        <p class="eyebrow">루미와 함께</p>
+        <h1>루미와 함께 손말 첫걸음을 시작해요</h1>
+        <p class="lead">오늘은 어떤 손말을 배워볼까요? 국립수어사전 영상을 보고, 내 손을 카메라로 확인하며 천천히 연습해요.</p>
         <div class="actions">
-          <a class="button" href="/learn/fingerspelling">지문자 학습 시작</a>
-          <a class="button secondary" href="${next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling"}">이어서 학습하기</a>
+          <a class="palmButton" href="${next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling"}">오늘의 첫걸음 시작</a>
+          <a class="palmButton palmButton--soft" href="/learn/fingerspelling">지문자 연습하기</a>
+        </div>
+        <div class="progressPebble" aria-label="전체 진행률 ${percent}%">
+          <span>오늘의 빛</span>
+          <strong>${completed} / ${total}</strong>
+          <div class="progressBar"><span style="width:${percent}%"></span></div>
         </div>
       </div>
-      <aside class="panel">
-        <p class="eyebrow">오늘의 학습</p>
-        <h2>${next ? `${html(next.symbol)} 지문자` : "준비 중"}</h2>
-        <div class="progressBar" aria-label="전체 진행률 ${percent}%"><span style="width:${percent}%"></span></div>
-        <p class="lead">${completed} / ${total}개 완료</p>
-        <div class="notice">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</div>
-      </aside>
     </section>
+    ${rumiSpeechBubble({
+      emotion: completed ? "cheer" : "thinking",
+      eyebrow: "오늘의 루미 피드백",
+      message: completed ? "와! 오늘도 손말 빛을 모았어요. 다음 지문자도 같이 가볼까요?" : "오늘도 한 걸음 같이 가볼까요? 먼저 영상을 보고 손모양을 천천히 따라 해요.",
+      actionLabel: "이어서 가기",
+      href: next ? `/learn/fingerspelling/${next.id}` : "/learn/fingerspelling"
+    })}
+    <section class="sectionTitle mapTitle">
+      <span>Adventure Map</span>
+      <h2>말풍선 학습 지도</h2>
+      <p class="lead">카드를 고르는 화면이 아니라, 루미와 함께 말풍선 길을 따라 이동하는 학습 흐름입니다.</p>
+    </section>
+    ${bubbleLearningMap(mapSteps)}
     <section class="sectionTitle">
       <span>Starter</span>
-      <h2>첫 5개 입문 과정</h2>
-      <p class="lead">교육 순서는 전문가 검수 전인 시범 구성입니다. 공식 설명처럼 보이지 않도록 사전 영상과 앱 안내를 구분합니다.</p>
+      <h2>첫 5개 손바닥 타일</h2>
+      <p class="lead">입문 과정은 전문가 검수 전 시범 구성입니다. 루미가 안내하는 순서대로 눌러보세요.</p>
     </section>
-    <section class="grid">${lessons.filter(lesson => lesson.curriculumGroup === "starter").map(lesson => lessonCard(lesson, progress.completedLessonIds)).join("")}</section>
+    ${handLetterPad(starter, progress.completedLessonIds)}
+    <section class="sectionTitle">
+      <span>Mission</span>
+      <h2>상황 미션 포털</h2>
+      <p class="lead">상황별 표현 학습을 넣을 수 있는 자리입니다. 지금은 구조만 열어두었습니다.</p>
+    </section>
+    ${missionPortals()}
   `;
 }
 
@@ -139,17 +254,31 @@ async function listLessons() {
   const { lessons } = await api("/api/lessons");
   const { progress, completed, total, percent } = progressSummary(lessons);
   app.innerHTML = `
-    <section class="sectionTitle">
-      <span>Fingerspelling</span>
-      <h1>지문자 과정</h1>
-      <p class="lead">자음과 모음을 나누어 보고, 연결 가능한 국립수어사전 영상을 확인합니다.</p>
-      <div class="progressBar"><span style="width:${percent}%"></span></div>
-      <p class="meta">${completed} / ${total}개 완료</p>
+    <section class="hero compactHero">
+      ${rumiMascot("confident", "md", true)}
+      <div class="speechBubble heroBubble">
+        <p class="eyebrow">지문자 배우기</p>
+        <h1>손바닥을 눌러 오늘의 손말을 골라요</h1>
+        <p class="lead">자음과 모음을 나누어 보고, 연결 가능한 국립수어사전 영상을 확인합니다.</p>
+        <div class="progressPebble" aria-label="전체 진행률 ${percent}%">
+          <span>모은 빛</span>
+          <strong>${completed} / ${total}</strong>
+          <div class="progressBar"><span style="width:${percent}%"></span></div>
+        </div>
+      </div>
     </section>
-    <h2>입문 과정 시범 구성</h2>
-    <section class="grid">${lessons.filter(lesson => lesson.curriculumGroup === "starter").map(lesson => lessonCard(lesson, progress.completedLessonIds)).join("")}</section>
-    <h2>전체 지문자 둘러보기</h2>
-    <section class="grid">${lessons.map(lesson => lessonCard(lesson, progress.completedLessonIds)).join("")}</section>
+    <section class="sectionTitle">
+      <span>Starter</span>
+      <h2>입문 손바닥 길</h2>
+      <p class="lead">처음 5개는 루미가 먼저 안내하는 시범 과정입니다.</p>
+    </section>
+    ${handLetterPad(lessons.filter(lesson => lesson.curriculumGroup === "starter"), progress.completedLessonIds)}
+    <section class="sectionTitle">
+      <span>All Letters</span>
+      <h2>전체 지문자 말풍선</h2>
+      <p class="lead">궁금한 글자를 바로 눌러서 기준 영상을 볼 수 있어요.</p>
+    </section>
+    <section class="bubbleList">${lessons.map(lesson => lessonCard(lesson, progress.completedLessonIds)).join("")}</section>
   `;
 }
 
@@ -170,11 +299,16 @@ async function lessonPage(id) {
 
   if (stage === "watch") {
     stageMarkup = `
-      <section id="watch" class="learningStage singleStage">
+      <section id="watch" class="learningStage singleStage stageBubble">
         <p class="eyebrow">보기</p>
+        ${rumiSpeechBubble({
+          emotion: "idle",
+          eyebrow: "루미의 보기 안내",
+          message: "먼저 사전 영상을 끝까지 보며 손가락과 손바닥 방향을 살펴봐요."
+        })}
         ${renderVideo(entry)}
         <div class="stageNav">
-          <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#understand">다음: 손모양 익히기</a>
+          <a class="palmButton palmButton--soft" href="/learn/fingerspelling/${lesson.id}#understand">다음: 손모양 익히기</a>
         </div>
       </section>
     `;
@@ -182,17 +316,22 @@ async function lessonPage(id) {
 
   if (stage === "understand") {
     stageMarkup = `
-      <section id="understand" class="panel learningStage singleStage">
+      <section id="understand" class="learningStage singleStage stageBubble">
         <p class="eyebrow">손모양 익히기</p>
         <h2>${html(lesson.symbol)} 손모양에서 먼저 볼 부분</h2>
         <p class="lead">영상을 보기만 하고 바로 따라 하면 손가락 방향을 놓치기 쉬워요. 이 단계에서는 따라 하기 전에 손의 기준점을 먼저 확인합니다.</p>
-        <ul class="tips">
+        ${rumiSpeechBubble({
+          emotion: "thinking",
+          eyebrow: "루미의 힌트",
+          message: "손가락이 펴졌는지, 접혔는지, 손바닥이 어디를 보는지 차례대로 봐요."
+        })}
+        <ul class="tips speechBubble miniBubble">
           ${lesson.learningTips.map(tip => `<li>${html(tip)}</li>`).join("")}
           ${lesson.commonMistakes.map(item => `<li>${html(item)}</li>`).join("")}
         </ul>
         <div class="stageNav">
-          <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#watch">이전: 보기</a>
-          <a class="button" href="/practice/fingerspelling/${lesson.id}">다음: 따라 하기</a>
+          <a class="palmButton palmButton--soft" href="/learn/fingerspelling/${lesson.id}#watch">이전: 보기</a>
+          <a class="palmButton" href="/practice/fingerspelling/${lesson.id}">다음: 따라 하기</a>
         </div>
       </section>
     `;
@@ -201,26 +340,35 @@ async function lessonPage(id) {
   if (stage === "quiz") {
     stageMarkup = practicePassed
       ? `
-        <section id="quiz" class="panel learningStage singleStage">
+        <section id="quiz" class="learningStage singleStage stageBubble">
           <p class="eyebrow">확인하기</p>
           <h2>오늘 배운 지문자를 골라보세요.</h2>
+          ${rumiSpeechBubble({
+            emotion: "encourage",
+            eyebrow: "루미의 문제",
+            message: "기준 사진을 보고 오늘 배운 손말을 찾아봐요."
+          })}
           <div class="quizStack">
             ${quiz.map(renderQuizCard).join("")}
           </div>
           <div class="stageNav">
-            <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">이전: 따라 하기</a>
+            <a class="palmButton palmButton--soft" href="/practice/fingerspelling/${lesson.id}">이전: 따라 하기</a>
             <button id="completeLesson">완료 저장</button>
           </div>
         </section>
       `
       : `
-        <section id="quiz" class="panel learningStage singleStage">
+        <section id="quiz" class="learningStage singleStage stageBubble">
           <p class="eyebrow">확인하기 잠김</p>
           <h2>아직! 학습이 덜 되었어요.</h2>
-          <p class="lead">사전 설명의 손가락 조건과 맞으면 확인하기가 열립니다. 먼저 따라 하기에서 손모양을 맞춰보세요.</p>
+          ${rumiSpeechBubble({
+            emotion: "sad",
+            eyebrow: "루미가 기다리는 중",
+            message: "괜찮아요. 따라 하기에서 손모양을 3초만 잘 유지하면 확인하기가 열려요."
+          })}
           <div class="actions">
-            <a class="button" href="/practice/fingerspelling/${lesson.id}">따라 하기에서 다시 해보기</a>
-            <a class="button secondary" href="/learn/fingerspelling/${lesson.id}#understand">손모양 다시 보기</a>
+            <a class="palmButton" href="/practice/fingerspelling/${lesson.id}">따라 하기에서 다시 해보기</a>
+            <a class="palmButton palmButton--soft" href="/learn/fingerspelling/${lesson.id}#understand">손모양 다시 보기</a>
           </div>
         </section>
       `;
@@ -229,30 +377,38 @@ async function lessonPage(id) {
   if (stage === "complete") {
     stageMarkup = isCompleted
       ? `
-        <section id="complete" class="panel learningStage singleStage">
+        <section id="complete" class="learningStage singleStage stageBubble">
           <p class="eyebrow">완료</p>
           <h2>${html(lesson.symbol)} 지문자를 마쳤어요.</h2>
-          <p class="lead">손말과 조금 더 가까워졌어요. 천천히 반복하면 자연스럽게 익숙해질 거예요.</p>
+          ${rumiSpeechBubble({
+            emotion: "cheer",
+            eyebrow: "루미의 칭찬",
+            message: "와! 오늘 미션 성공이에요. 손말과 조금 더 가까워졌어요."
+          })}
           <div class="actions">
-            <a class="button" href="/learn/fingerspelling">과정 목록</a>
-            <a class="button secondary" href="/practice/fingerspelling/${lesson.id}">다시 연습하기</a>
+            <a class="palmButton" href="/learn/fingerspelling">과정 목록</a>
+            <a class="palmButton palmButton--soft" href="/practice/fingerspelling/${lesson.id}">다시 연습하기</a>
           </div>
         </section>
       `
       : `
-        <section id="complete" class="panel learningStage singleStage">
+        <section id="complete" class="learningStage singleStage stageBubble">
           <p class="eyebrow">완료</p>
           <h2>아직 완료 전이에요.</h2>
-          <p class="lead">확인하기를 마치고 완료 저장을 누르면 진도에 기록됩니다.</p>
+          ${rumiSpeechBubble({
+            emotion: "thinking",
+            eyebrow: "루미의 안내",
+            message: "확인하기를 마치고 완료 저장을 누르면 진도에 기록돼요."
+          })}
           <div class="actions">
-            <a class="button" href="/learn/fingerspelling/${lesson.id}#quiz">확인하기로 이동</a>
+            <a class="palmButton" href="/learn/fingerspelling/${lesson.id}#quiz">확인하기로 이동</a>
           </div>
         </section>
       `;
   }
 
   app.innerHTML = `
-    <section class="sectionTitle">
+    <section class="sectionTitle lessonHeader">
       <span>${categoryLabel(lesson.category)} · ${lesson.reviewStatus === "expert-reviewed" ? "전문가 검수 완료" : "전문가 검수 전"}</span>
       <h1><span class="symbol">${html(lesson.symbol)}</span> 지문자 배우기</h1>
       <p class="lead">보기, 손모양 익히기, 따라 하기, 확인하기, 완료 순서로 천천히 연습합니다.</p>
@@ -289,13 +445,16 @@ async function progressPage() {
   const { lessons } = await api("/api/lessons");
   const { progress, completed, total, percent } = progressSummary(lessons);
   app.innerHTML = `
-    <section class="panel">
+    <section class="hero compactHero">
+      ${rumiMascot(completed ? "cheer" : "happy", "md", true)}
+      <div class="speechBubble heroBubble">
       <p class="eyebrow">Progress</p>
-      <h1>학습 진도</h1>
+      <h1>루미와 모은 손말 빛</h1>
       <div class="progressBar"><span style="width:${percent}%"></span></div>
       <p class="lead">${completed} / ${total}개 지문자를 완료했어요.</p>
       <p>최근 학습: ${progress.recentLessonIds.length ? progress.recentLessonIds.map(html).join(", ") : "아직 없습니다."}</p>
       <div class="actions"><button id="resetProgress" class="ghost">진도 초기화</button></div>
+      </div>
     </section>
   `;
   document.querySelector("#resetProgress")?.addEventListener("click", () => {
@@ -306,15 +465,18 @@ async function progressPage() {
 
 function aboutPage() {
   app.innerHTML = `
-    <section class="panel">
+    <section class="hero compactHero">
+      ${rumiMascot("thinking", "md", true)}
+      <div class="speechBubble heroBubble">
       <p class="eyebrow">About</p>
       <h1>손말 첫걸음은 공식 평가 도구가 아닙니다.</h1>
       <p class="lead">이 앱은 한국수어 지문자를 처음 접하는 사용자가 사전 영상을 보고 반복 연습하도록 돕는 학습 MVP입니다. 통역 서비스가 아니며, 모든 손 모양을 정확하게 판정하지 않습니다.</p>
-      <div class="grid">
-        <article class="card"><strong>카메라 개인정보</strong><p>카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p></article>
-        <article class="card"><strong>출처</strong><p>수어 영상은 국립국어원 한국수어사전 자료를 API로 연결해 표시합니다.</p></article>
-        <article class="card"><strong>검수 필요</strong><p>세부 손 모양 설명과 기준 손 위치 데이터는 농인 당사자 및 한국수어 전문가 검수가 필요합니다.</p></article>
       </div>
+    </section>
+    <section class="bubbleList">
+      <article class="speechBubble miniBubble"><strong>카메라 개인정보</strong><p>카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</p></article>
+      <article class="speechBubble miniBubble"><strong>출처</strong><p>수어 영상은 국립국어원 한국수어사전 자료를 API로 연결해 표시합니다.</p></article>
+      <article class="speechBubble miniBubble"><strong>검수 필요</strong><p>세부 손 모양 설명과 기준 손 위치 데이터는 농인 당사자 및 한국수어 전문가 검수가 필요합니다.</p></article>
     </section>
   `;
 }
@@ -332,14 +494,17 @@ function devReferenceCapture() {
 
 function practiceRoute(id) {
   app.innerHTML = `
-    <section class="panel">
+    <section class="hero compactHero">
+      ${rumiMascot("idle", "md", true)}
+      <div class="speechBubble heroBubble">
       <p class="eyebrow">Practice</p>
       <h1>연습 화면을 준비하고 있어요.</h1>
       <p class="lead">국립수어사전 기준 영상을 불러오는 중입니다. 잠시만 기다려 주세요.</p>
       <div class="notice">카메라 영상은 기기 안에서만 분석되며 서버에 저장되지 않습니다.</div>
+      </div>
     </section>
   `;
-  import("/js/practice.js?v=20260703-hold-gate")
+  import("/js/practice.js?v=20260703-rumi-map")
     .then(module => module.renderPractice(app, id, repo))
     .catch(error => {
       app.innerHTML = `<section class="panel danger"><h1>연습 화면을 불러오지 못했어요.</h1><p>${html(error.message)}</p></section>`;
