@@ -136,7 +136,17 @@ video { width: 100%; border-radius: 22px; background: #222; }
   line-height: 1.55;
 }
 .privacyNote { color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
+.quizStack { display: grid; gap: 1rem; margin-top: 1rem; }
+.quizCard {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: #fffdf9;
+  padding: 1rem;
+}
+.quizCard h3 { margin: 0.3rem 0 0.9rem; font-size: 1.12rem; }
 .quizChoices { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+.quizChoice[aria-pressed="true"] { outline: 3px solid rgba(47, 111, 237, 0.35); outline-offset: 2px; }
+.quizResult { margin-bottom: 0; }
 .progressBar { height: 14px; border-radius: 999px; background: var(--border); overflow: hidden; }
 .progressBar span { display: block; height: 100%; background: var(--success); }
 .empty { color: var(--muted); }

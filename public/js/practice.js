@@ -135,6 +135,11 @@ export async function renderPractice(app, id, repo) {
   let running = false;
   let inferenceRunning = false;
   let lastVideoTime = -1;
+  let stableFeedbackKey = "";
+  let pendingFeedbackKey = "";
+  let pendingFeedbackCount = 0;
+  let stableFeedback = [];
+  let stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 };
   const history = [];
 
   function resizeCanvas() {
@@ -163,8 +168,23 @@ export async function renderPractice(app, id, repo) {
           canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         }
         const { feedback, meta } = evaluatePracticeFrame({ hands, history, referenceAvailable: false });
-        feedbackList.innerHTML = feedback.map(item => `<div class="feedbackItem">${html(item.text)}</div>`).join("");
-        evaluationMeta.innerHTML = renderEvaluationMeta(meta);
+        const feedbackKey = feedback.map(item => item.state).join("|");
+        if (feedbackKey === stableFeedbackKey) {
+          stableFeedback = feedback;
+          stableMeta = meta;
+        } else if (feedbackKey === pendingFeedbackKey) {
+          pendingFeedbackCount += 1;
+          if (pendingFeedbackCount >= 3 || feedback[0]?.state === "no_hand") {
+            stableFeedbackKey = feedbackKey;
+            stableFeedback = feedback;
+            stableMeta = meta;
+          }
+        } else {
+          pendingFeedbackKey = feedbackKey;
+          pendingFeedbackCount = 1;
+        }
+        feedbackList.innerHTML = stableFeedback.map(item => `<div class="feedbackItem">${html(item.text)}</div>`).join("");
+        evaluationMeta.innerHTML = renderEvaluationMeta(stableMeta);
         status.textContent = hands.length ? `${hands.length}개 손이 감지되고 있어요.` : "손이 아직 보이지 않아요.";
       } finally {
         inferenceRunning = false;
@@ -242,6 +262,11 @@ export async function renderPractice(app, id, repo) {
 
   document.querySelector("#resetPractice").addEventListener("click", () => {
     history.length = 0;
+    stableFeedbackKey = "";
+    pendingFeedbackKey = "";
+    pendingFeedbackCount = 0;
+    stableFeedback = [];
+    stableMeta = { detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 };
     feedbackList.innerHTML = "";
     evaluationMeta.innerHTML = renderEvaluationMeta({ detected: false, handCount: 0, centerScore: 0, sizeScore: 0, stabilityScore: 0 });
     status.textContent = running ? "다시 천천히 손을 보여주세요." : "카메라를 시작하기 전입니다.";

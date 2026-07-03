@@ -44,6 +44,19 @@ function renderVideo(entry) {
   `;
 }
 
+function renderQuizCard(item, index) {
+  return `
+    <article class="quizCard" data-quiz-id="${html(item.id)}">
+      <p class="eyebrow">문항 ${index + 1}</p>
+      <h3>${html(item.prompt)}</h3>
+      <div class="quizChoices">
+        ${item.choices.map(choice => `<button class="ghost quizChoice" data-quiz-id="${html(item.id)}" data-choice="${html(choice.id)}" data-answer="${html(item.answerId)}">${html(choice.label)}</button>`).join("")}
+      </div>
+      <p id="quizResult-${html(item.id)}" class="lead quizResult" aria-live="polite"></p>
+    </article>
+  `;
+}
+
 function lessonCard(lesson, completedIds = []) {
   const done = completedIds.includes(lesson.id);
   return `
@@ -139,11 +152,10 @@ async function lessonPage(id) {
     </section>
     <section class="panel">
       <p class="eyebrow">확인하기</p>
-      <h2>${html(quiz[0].prompt)}</h2>
-      <div class="quizChoices">
-        ${quiz[0].choices.map(choice => `<button class="ghost quizChoice" data-choice="${choice.id}" data-answer="${quiz[0].answerId}">${html(choice.label)}</button>`).join("")}
+      <h2>짧게 확인해볼까요?</h2>
+      <div class="quizStack">
+        ${quiz.map(renderQuizCard).join("")}
       </div>
-      <p id="quizResult" class="lead"></p>
     </section>
   `;
   document.querySelector("#completeLesson")?.addEventListener("click", () => {
@@ -153,10 +165,16 @@ async function lessonPage(id) {
   document.querySelectorAll(".quizChoice").forEach(button => {
     button.addEventListener("click", () => {
       const ok = button.dataset.choice === button.dataset.answer;
-      document.querySelector("#quizResult").textContent = ok
+      const result = document.getElementById(`quizResult-${button.dataset.quizId}`);
+      result.textContent = ok
         ? "좋아요. 첫걸음을 잘 마쳤어요."
         : "조금 헷갈릴 수 있어요. 영상을 다시 살펴볼까요?";
-      if (ok) repo.completeQuiz(lesson.id);
+      button.closest(".quizCard")?.querySelectorAll(".quizChoice").forEach(choice => {
+        choice.setAttribute("aria-pressed", String(choice === button));
+      });
+      const solvedCount = [...document.querySelectorAll(".quizResult")]
+        .filter(item => item.textContent.includes("좋아요")).length;
+      if (ok && solvedCount >= quiz.length) repo.completeQuiz(lesson.id);
     });
   });
 }
