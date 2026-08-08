@@ -1,0 +1,16 @@
+.local/
+dist/
+fixtures/
+docs/
+cli/
+schemas/
+tests/
+web/tests/
+web/server.mjs
+review-results/
+approved-output/
+**/*.mp4
+**/*.zip
+**/client_secrets.json
+**/token.json
+**/*checkpoint*.json

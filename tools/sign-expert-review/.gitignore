@@ -1,0 +1,9 @@
+.local/
+dist/
+review-results/
+approved-output/
+**/review-sync-checkpoint.json
+fixtures/*.mp4
+*.zip
+client_secrets.json
+token.json

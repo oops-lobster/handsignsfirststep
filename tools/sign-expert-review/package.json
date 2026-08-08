@@ -1,0 +1,17 @@
+{
+  "name": "handsignsfirststep-expert-review",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node web/server.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "npm run lint && node --test web/tests/*.test.mjs && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "e2e": "node --test web/tests/*.e2e.test.mjs",
+    "build": "node scripts/build-vercel.mjs",
+    "build:local": "npm test && node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

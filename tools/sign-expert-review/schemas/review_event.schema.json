@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://handsignsfirststep.local/schemas/review-event-v1.json",
+  "title": "Backward-compatible append-only expert review event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id", "batch_id", "candidate_id", "revision", "reviewer_code", "reviewed_at",
+    "client_version", "target_validation", "annotated_start_local_frame", "annotated_end_local_frame",
+    "excluded", "exclusion_reason", "expert_notes", "clip_sha256", "manifest_sha256", "save_status"
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "review_mode", "review_state", "boundary_assessment", "precise_review_required",
+        "learning_video_assessment", "reference_assessment", "representative_fit",
+        "sentence_connection_effect", "boundary_status"
+      ]
+    },
+    {
+      "required": [
+        "boundary_status", "approved_start_local_frame", "approved_end_local_frame",
+        "approved_start_source_sec", "approved_end_source_sec", "learning_allowed", "reference_allowed",
+        "representative_fit", "sentence_connection_effect"
+      ]
+    }
+  ],
+  "properties": {
+    "event_id": {"type": "string", "minLength": 1},
+    "batch_id": {"type": "string", "minLength": 1},
+    "candidate_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "reviewer_code": {"type": "string", "minLength": 1},
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "client_version": {"type": "string", "minLength": 1},
+    "review_mode": {"enum": ["COARSE", "PRECISE"]},
+    "review_state": {"enum": ["COARSE_REVIEW_COMPLETE", "PRECISE_REVIEW_REQUIRED", "PRECISE_REVIEW_COMPLETE", "REVIEW_ON_HOLD", "REJECTED"]},
+    "target_validation": {"enum": ["TARGET_CONFIRMED", "TARGET_MISMATCH", "TARGET_UNCERTAIN"]},
+    "boundary_assessment": {"enum": ["BOUNDARY_KEEP_ORIGINAL", "BOUNDARY_START_TOO_EARLY", "BOUNDARY_START_TOO_LATE", "BOUNDARY_END_TOO_EARLY", "BOUNDARY_END_TOO_LATE", "BOUNDARY_BOTH_NEED_ADJUSTMENT", "BOUNDARY_AMBIGUOUS", "BOUNDARY_UNUSABLE"]},
+    "precise_review_required": {"type": "boolean"},
+    "precise_review_reason": {"type": "string"},
+    "boundary_confidence": {"type": ["number", "string", "null"]},
+    "annotated_start_local_frame": {"type": "integer", "minimum": 0},
+    "annotated_end_local_frame": {"type": "integer", "minimum": 1},
+    "auto_proposed_start_local_frame": {"type": ["integer", "null"], "minimum": 0},
+    "auto_proposed_end_local_frame": {"type": ["integer", "null"], "minimum": 1},
+    "auto_proposed_start_source_sec": {"type": ["number", "null"], "minimum": 0},
+    "auto_proposed_end_source_sec": {"type": ["number", "null"], "minimum": 0},
+    "manual_start_local_frame": {"type": ["integer", "null"], "minimum": 0},
+    "manual_end_local_frame": {"type": ["integer", "null"], "minimum": 1},
+    "manual_start_source_sec": {"type": ["number", "null"], "minimum": 0},
+    "manual_end_source_sec": {"type": ["number", "null"], "minimum": 0},
+    "approved_start_local_frame": {"type": ["integer", "null"], "minimum": 0},
+    "approved_end_local_frame": {"type": ["integer", "null"], "minimum": 1},
+    "approved_start_source_sec": {"type": ["number", "null"], "minimum": 0},
+    "approved_end_source_sec": {"type": ["number", "null"], "minimum": 0},
+    "boundary_status": {"enum": ["KEEP_ORIGINAL", "MODIFIED", "NEEDS_REFINEMENT", "BOUNDARY_UNCERTAIN", "UNUSABLE"]},
+    "learning_video_assessment": {"enum": ["LEARNING_ALLOWED", "LEARNING_CONDITIONAL", "LEARNING_NOT_ALLOWED", "LEARNING_UNCERTAIN"]},
+    "reference_assessment": {"enum": ["REFERENCE_ALLOWED", "REFERENCE_CONDITIONAL", "REFERENCE_NOT_ALLOWED", "REFERENCE_UNCERTAIN"]},
+    "learning_allowed": {"enum": ["ALLOWED", "CONDITIONAL", "NOT_ALLOWED", "UNSURE"]},
+    "reference_allowed": {"enum": ["ALLOWED", "CONDITIONAL", "NOT_ALLOWED", "UNSURE"]},
+    "representative_fit": {"enum": ["REPRESENTATIVE_HIGH", "REPRESENTATIVE_MEDIUM", "REPRESENTATIVE_LOW", "REPRESENTATIVE_UNSUITABLE", "REPRESENTATIVE_UNCERTAIN", "HIGH", "MEDIUM", "LOW", "UNSUITABLE"]},
+    "representative_fit_legacy": {"enum": ["HIGH", "MEDIUM", "LOW", "UNSUITABLE", "UNSURE", null]},
+    "sentence_connection_effect": {"enum": ["CONNECTION_NONE", "CONNECTION_MINOR", "CONNECTION_MAJOR", "CONNECTION_UNCERTAIN", "NONE", "MINOR", "PRESENT", "UNSURE"]},
+    "sentence_connection_effect_legacy": {"enum": ["NONE", "MINOR", "PRESENT", "UNSURE", null]},
+    "excluded": {"type": ["boolean", "null"]},
+    "exclusion_reason": {"type": "string"},
+    "expert_notes": {"type": "string"},
+    "review_duration_ms": {"type": "integer", "minimum": 0},
+    "interaction_count": {"type": "integer", "minimum": 0},
+    "clip_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "save_status": {"enum": ["VALID", "SYNC_PENDING"]}
+  }
+}

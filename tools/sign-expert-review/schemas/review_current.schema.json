@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://handsignsfirststep.local/schemas/review-current-v1.json",
+  "title": "Reduced current expert review state",
+  "type": "object",
+  "required": ["schema_version", "batch_id", "revision", "generated_at", "events"],
+  "properties": {
+    "schema_version": {"const": "sign-expert-review-current-v1"},
+    "batch_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "events": {"type": "array", "items": {"$ref": "review_event.schema.json"}}
+  }
+}

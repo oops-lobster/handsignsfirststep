@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://handsignsfirststep.local/schemas/approved-manifest-export-v1.json",
+  "title": "Portal-approved manifest compatible with sign-training v2",
+  "type": "object",
+  "required": ["schema_version", "records"],
+  "properties": {
+    "schema_version": {"const": "sign-training-manifest-v2"},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id", "word", "gloss_id", "signer_id", "session_id",
+          "source_archive", "source_member", "source_video_path", "camera_view",
+          "handedness", "annotated_start_sec", "annotated_end_sec",
+          "approved_start_sec", "approved_end_sec", "expert_status",
+          "learning_video_allowed", "reference_allowed", "expert_reviewer_code",
+          "expert_reviewed_at", "expert_review_revision", "split", "notes"
+        ],
+        "properties": {
+          "candidate_id": {"type": "string", "minLength": 1},
+          "word": {"const": "좋다1"},
+          "gloss_id": {"const": "좋다1"},
+          "signer_id": {"type": "string", "minLength": 1},
+          "session_id": {"type": "string", "minLength": 1},
+          "source_archive": {"type": "string", "minLength": 1},
+          "source_member": {"type": "string", "minLength": 1},
+          "source_video_path": {"type": "string", "minLength": 1},
+          "camera_view": {"type": "string", "minLength": 1},
+          "handedness": {"type": "string", "minLength": 1},
+          "annotated_start_sec": {"type": "number", "minimum": 0},
+          "annotated_end_sec": {"type": "number", "exclusiveMinimum": 0},
+          "approved_start_sec": {"type": "number", "minimum": 0},
+          "approved_end_sec": {"type": "number", "exclusiveMinimum": 0},
+          "expert_status": {"enum": ["APPROVED_LEARNING_VIDEO", "APPROVED_REFERENCE", "APPROVED_BOTH"]},
+          "learning_video_allowed": {"type": "boolean"},
+          "reference_allowed": {"type": "boolean"},
+          "expert_reviewer_code": {"type": "string", "minLength": 1},
+          "expert_reviewed_at": {"type": "string", "format": "date-time"},
+          "expert_review_revision": {"type": "string", "minLength": 1},
+          "split": {"const": ""},
+          "notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}

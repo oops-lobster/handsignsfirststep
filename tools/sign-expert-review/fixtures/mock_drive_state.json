@@ -1,0 +1,9 @@
+{
+  "storageQuota": {
+    "limit": "15000000000",
+    "usage": "3000000000",
+    "usageInDrive": "2500000000",
+    "usageInDriveTrash": "500000000"
+  },
+  "files": []
+}
