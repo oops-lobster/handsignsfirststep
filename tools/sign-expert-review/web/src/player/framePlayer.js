@@ -6,6 +6,7 @@ export class FramePlayer extends EventTarget {
     this.video = video;
     this.candidate = null;
     this.currentFrame = 0;
+    this.verifiedFrame = null;
     this.objectUrl = null;
     this.selectionStopFrame = null;
     this.actionController = null;
@@ -52,6 +53,20 @@ export class FramePlayer extends EventTarget {
     const seekTime = presentationSeekTime(this.candidate, targetFrame, this.video.duration);
     const tolerance = frameTolerance(this.candidate, targetFrame);
     this.video.pause();
+    const currentTime = this.video.currentTime;
+    if (
+      this.verifiedFrame === targetFrame
+      && Number.isFinite(currentTime)
+      && Math.abs(currentTime - targetTime) <= tolerance
+    ) {
+      // Assigning currentTime to the value Chromium is already presenting is
+      // a no-op on some versions: neither `seeked` nor a new video-frame
+      // callback is guaranteed. Reuse the compositor-verified frame instead
+      // of turning an already-correct position into a false blocking error.
+      this.currentFrame = targetFrame;
+      this.#emitFrame();
+      return targetFrame;
+    }
     const seeked = once(this.video, "seeked", 3000, "FRAME_SEEK_UNVERIFIED", signal);
     // Chromium may deliver one already-queued callback for the frame displayed
     // before a paused seek. Subscribe before changing currentTime, ignore any
@@ -65,6 +80,7 @@ export class FramePlayer extends EventTarget {
       throw new Error("FRAME_SEEK_UNVERIFIED");
     }
     this.currentFrame = targetFrame;
+    this.verifiedFrame = targetFrame;
     this.#emitFrame();
     return targetFrame;
   }
@@ -105,6 +121,7 @@ export class FramePlayer extends EventTarget {
     if (this.objectUrl) URL.revokeObjectURL(this.objectUrl);
     this.objectUrl = null;
     this.candidate = null;
+    this.verifiedFrame = null;
     this.selectionStopFrame = null;
   }
 
@@ -135,6 +152,7 @@ export class FramePlayer extends EventTarget {
       this.trackingCallbackId = null;
       if (!this.candidate || generation !== this.trackingGeneration) return;
       this.currentFrame = nearestFrame(this.candidate, metadata.mediaTime ?? this.video.currentTime);
+      this.verifiedFrame = this.currentFrame;
       this.#emitFrame();
       if (this.selectionStopFrame != null && this.currentFrame >= this.selectionStopFrame) {
         this.selectionStopFrame = null;

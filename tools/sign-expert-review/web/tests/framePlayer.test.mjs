@@ -95,6 +95,18 @@ class ImmediateMetadataVideo extends PausedSeekVideo {
   load() {}
 }
 
+class NoOpSeekVideo extends PausedSeekVideo {
+  set currentTime(value) {
+    this.seekTargets.push(value);
+    if (Math.abs(value - this._currentTime) < 1e-9) return;
+    super.currentTime = value;
+  }
+
+  get currentTime() {
+    return super.currentTime;
+  }
+}
+
 test("load subscribes to metadata before assigning a fast blob source", async () => {
   const video = new ImmediateMetadataVideo();
   const player = new FramePlayer(video);
@@ -158,4 +170,20 @@ test("repeated annotation playback keeps the same source and exact frame range",
   assert.deepEqual(video.seekTargets.slice(-8), Array(8).fill(expectedSeekTime));
   assert.equal(video.callbacks.size, 0);
   assert.ok(video.maxActiveCallbacks <= 2);
+});
+
+test("immediate annotation replay does not require a no-op seek event", async () => {
+  const video = new NoOpSeekVideo();
+  const player = new FramePlayer(video);
+  player.candidate = candidate;
+  player.currentFrame = candidate.annotated_start_local_frame;
+  const start = candidate.annotated_start_local_frame;
+  const end = candidate.annotated_end_local_frame;
+
+  await player.playSelection(start, end);
+  await player.playSelection(start, end);
+
+  assert.equal(player.candidate.candidate_id, candidate.candidate_id);
+  assert.equal(player.currentFrame, start);
+  assert.equal(video.paused, false);
 });
