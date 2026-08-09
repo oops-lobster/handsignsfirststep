@@ -6,7 +6,7 @@ import { GoogleIdentityAuth } from "../auth/googleIdentity.js";
 import { FramePlayer } from "../player/framePlayer.js";
 import { BoundaryController } from "../player/boundaryController.js";
 import { createReviewEvent } from "../review/eventFactory.js";
-import { latestEvents, progressFor } from "../review/eventReducer.js";
+import { latestEvents, mergeReviewEvents, progressFor } from "../review/eventReducer.js";
 import { candidateReviewState, normalizeReviewInput } from "../review/reviewModel.js";
 import { OfflineEventQueue } from "../storage/offlineQueue.js";
 import { ReviewSession } from "../storage/reviewSession.js";
@@ -64,8 +64,7 @@ async function bootstrap() {
     elements.blocking_banner.textContent = "권장 검토량 120개를 넘었습니다. 절대 상한 150개 안에서 운영자 승인을 확인해 주세요.";
     elements.blocking_banner.hidden = false;
   }
-  state.events = await state.store.listEvents();
-  state.current = latestEvents(state.events, { batchId: state.manifest.batch_id, revision: state.manifest.revision });
+  await refreshReviewState();
   populateSignerFilter();
   bindEvents();
   renderProgress();
@@ -244,8 +243,15 @@ function restoreForm(candidate, draft) {
   }
   state.dirty = Boolean(draft);
   elements.quick_summary.textContent = "아직 적용하지 않았습니다.";
-  setPill(elements.save_status, saved ? stateLabel(candidateReviewState(saved, candidate)) : draft ? "로컬 초안" : "변경 없음", draft ? "warning" : saved ? "good" : "neutral");
+  renderSaveStatus(saved, candidate, { hasDraft: Boolean(draft) });
   hideValidation();
+}
+
+function renderSaveStatus(saved, candidate, { hasDraft = false } = {}) {
+  if (hasDraft) return setPill(elements.save_status, "로컬 초안", "warning");
+  if (saved?.save_status === "SYNC_PENDING") return setPill(elements.save_status, "로컬 저장됨, 동기화 대기", "warning");
+  if (saved) return setPill(elements.save_status, stateLabel(candidateReviewState(saved, candidate)), "good");
+  return setPill(elements.save_status, "변경 없음", "neutral");
 }
 
 function formValue(overrides = {}) {
@@ -321,8 +327,27 @@ function holdReview() {
 
 async function flushQueue() {
   const result = await state.queue.flush(state.store);
+  await refreshReviewState();
   await refreshQueueCount();
+  renderProgress();
+  renderCandidateList();
+  if (!state.dirty && state.candidateIndex >= 0) {
+    const candidate = currentCandidate();
+    renderSaveStatus(state.current.get(candidate.candidate_id), candidate);
+  }
   if (result.synced) toast(`${result.synced}개 로컬 판정을 동기화했습니다.`);
+}
+
+async function refreshReviewState() {
+  const storedEvents = await state.store.listEvents();
+  let pendingEvents = [];
+  try {
+    pendingEvents = await state.queue.list();
+  } catch {
+    pendingEvents = [];
+  }
+  state.events = mergeReviewEvents(storedEvents, pendingEvents);
+  state.current = latestEvents(state.events, { batchId: state.manifest.batch_id, revision: state.manifest.revision });
 }
 
 function updateBoundary(side) {

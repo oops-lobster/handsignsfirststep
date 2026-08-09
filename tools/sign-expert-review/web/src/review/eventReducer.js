@@ -1,5 +1,16 @@
 import { candidateReviewState, normalizeReviewInput } from "./reviewModel.js";
 
+export function mergeReviewEvents(storedEvents = [], pendingEvents = []) {
+  const merged = [];
+  const seenEventIds = new Set();
+  for (const event of [...storedEvents, ...pendingEvents]) {
+    if (!event?.event_id || seenEventIds.has(event.event_id)) continue;
+    seenEventIds.add(event.event_id);
+    merged.push(event);
+  }
+  return merged;
+}
+
 export function latestEvents(events, { batchId, revision } = {}) {
   const byCandidate = new Map();
   const seenEventIds = new Set();

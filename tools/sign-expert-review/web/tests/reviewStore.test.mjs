@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { MockReviewStore } from "../src/adapters/mockReviewStore.js";
-import { latestEvents, progressFor } from "../src/review/eventReducer.js";
+import { latestEvents, mergeReviewEvents, progressFor } from "../src/review/eventReducer.js";
 
 class MemoryStorage {
   constructor() { this.values = new Map(); }
@@ -28,6 +28,21 @@ test("mock network failure is recoverable", async () => {
   const store = new MockReviewStore({ storage: new MemoryStorage(), failNextSave: true });
   await assert.rejects(store.appendEvent(event("e1", "A", "2026-08-08T00:00:00Z")), /MOCK_NETWORK_FAILURE/);
   assert.equal((await store.appendEvent(event("e1", "A", "2026-08-08T00:00:00Z"))).appended, true);
+});
+
+test("pending offline events are restored without overriding server copies", () => {
+  const stored = [event("e1", "A", "2026-08-08T00:00:00Z", { save_status: "VALID" })];
+  const pending = [
+    event("e1", "A", "2026-08-08T00:00:00Z", { save_status: "SYNC_PENDING" }),
+    event("e2", "B", "2026-08-08T00:01:00Z", { save_status: "SYNC_PENDING" })
+  ];
+
+  const merged = mergeReviewEvents(stored, pending);
+
+  assert.deepEqual(merged.map(item => item.event_id), ["e1", "e2"]);
+  assert.equal(merged[0].save_status, "VALID");
+  assert.equal(merged[1].save_status, "SYNC_PENDING");
+  assert.equal(latestEvents(merged, { batchId: "batch", revision: "r1" }).get("B").event_id, "e2");
 });
 
 test("latest event reduction is idempotent and revision-scoped", () => {
